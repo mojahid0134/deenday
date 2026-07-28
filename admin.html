@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Roboto, sans-serif; }
+  body { background:#f4f5f7; min-height:100vh; }
+
+  .topbar {
+    background:linear-gradient(135deg,#1A1A2E,#16213E);
+    color:#fff; padding:16px; text-align:center; font-size:18px; font-weight:600;
+  }
+
+  .center-box {
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:60px 20px;
+  }
+  .login-btn {
+    background:#1A1A2E; color:#fff; border:none; padding:14px 28px;
+    border-radius:30px; font-size:15px; font-weight:600;
+  }
+  .denied { color:#c0392b; font-weight:600; margin-top:20px; text-align:center; }
+
+  .panel { padding:16px; display:none; flex-direction:column; gap:20px; }
+  .card { background:#fff; border-radius:14px; padding:18px; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+  .card h3 { margin-bottom:12px; font-size:16px; color:#1A1A2E; }
+  .hint { font-size:12px; color:#999; margin:-6px 0 10px; }
+  input, select, textarea {
+    width:100%; padding:12px; border:1px solid #ddd; border-radius:8px;
+    font-size:14px; margin-bottom:10px;
+  }
+  button.action {
+    background:#0f3460; color:#fff; border:none; padding:12px;
+    border-radius:8px; width:100%; font-size:15px; font-weight:600;
+  }
+  .msg { font-size:13px; margin-top:8px; text-align:center; }
+  .msg.ok { color:#1e8e3e; }
+  .msg.err { color:#c0392b; }
+  .signout { text-align:center; margin-top:10px; }
+  .signout a { color:#666; font-size:13px; }
+
+  .list-item {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 0; border-bottom:1px solid #f0f0f0; gap:10px;
+    position:relative;
+  }
+  .list-item:last-child { border-bottom:none; }
+  .list-item-text {
+    font-size:14px; color:#333; flex:1;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .list-item-tag { font-size:11px; color:#999; display:block; margin-top:2px; }
+  .empty-list { color:#999; font-size:13px; text-align:center; padding:10px 0; }
+
+  .menu-wrap { position:relative; flex-shrink:0; }
+  .dots-btn {
+    background:#eee; border:none; width:32px; height:32px; border-radius:50%;
+    font-size:18px; color:#333; line-height:1;
+  }
+  .dropdown-menu {
+    display:none; position:absolute; right:0; top:38px;
+    background:#fff; border-radius:10px; box-shadow:0 4px 16px rgba(0,0,0,0.15);
+    min-width:130px; z-index:20; overflow:hidden;
+  }
+  .dropdown-menu.open { display:block; }
+  .dropdown-menu div {
+    padding:12px 16px; font-size:14px; color:#333; border-bottom:1px solid #f5f5f5;
+  }
+  .dropdown-menu div:last-child { border-bottom:none; color:#c0392b; }
+
+  .rt-toolbar {
+    display:flex; flex-wrap:wrap; gap:6px; background:#f4f5f7; border:1px solid #ddd;
+    border-radius:8px 8px 0 0; padding:8px; border-bottom:none;
+  }
+  .rt-toolbar button {
+    background:#fff; border:1px solid #ddd; border-radius:6px; padding:6px 10px;
+    font-size:13px; font-weight:700; color:#333; cursor:pointer; width:auto; margin-bottom:0;
+  }
+  .rt-toolbar button:active { background:#e8e8e8; }
+  .rt-toolbar input[type=color] {
+    width:34px; height:32px; padding:2px; border:1px solid #ddd; border-radius:6px; margin-bottom:0; cursor:pointer;
+  }
+  .rt-toolbar select { width:auto; padding:6px; margin-bottom:0; font-size:13px; border-radius:6px; }
+  .rt-toolbar .rt-label { font-size:11px; color:#888; align-self:center; margin-right:-2px; }
+  .rt-editor {
+    min-height:180px; max-height:400px; overflow-y:auto; border:1px solid #ddd;
+    border-top:none; border-radius:0 0 8px 8px; padding:12px; font-size:15px;
+    line-height:1.6; margin-bottom:10px; background:#fff;
+  }
+  .rt-editor:empty:before { content: attr(data-placeholder); color:#aaa; }
+
+  /* ===== Section chips (for the Daily Hadith / মাসআলা / প্রচলিত ভুল / etc. picker) ===== */
+  .chip-row { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+  .chip {
+    background:#f0f2f5; border:1.5px solid #e0e2e6; color:#333; padding:9px 14px;
+    border-radius:20px; font-size:13px; font-weight:700; cursor:pointer; width:auto; margin-bottom:0;
+  }
+  .chip.active { background:#0f3460; border-color:#0f3460; color:#fff; }
+
+  /* ===== Playlist search picker (Al Hadith / Prophets / Quran topics / Sahabah / Dua) ===== */
+  .pl-results { display:none; border:1px solid #ddd; border-radius:8px; max-height:220px; overflow-y:auto; margin:-4px 0 10px; }
+  .pl-result-item { padding:10px 12px; font-size:13.5px; color:#333; border-bottom:1px solid #f2f2f2; cursor:pointer; }
+  .pl-result-item:last-child { border-bottom:none; }
+  .pl-result-item:active { background:#f4f5f7; }
+  .pl-result-tag { font-size:11px; color:#999; margin-left:6px; }
+  .pl-result-empty { padding:12px; font-size:13px; color:#999; text-align:center; }
+  .pl-selected { font-size:13.5px; color:#1e8e3e; font-weight:600; margin:-4px 0 12px; }
+  .pl-selected a { font-weight:700; }
+
+  .modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:300;
+    align-items:flex-end; justify-content:center; }
+  .modal-backdrop.open { display:flex; }
+  .modal-sheet { background:#fff; width:100%; max-width:480px; border-radius:20px 20px 0 0;
+    padding:20px 20px calc(20px + env(safe-area-inset-bottom, 0px)); max-height:88vh; overflow-y:auto; }
+  .modal-title { font-size:17px; font-weight:800; color:#1a1a2e; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; }
+  .modal-close { background:#E0F2FE; border:none; width:30px; height:30px; border-radius:50%; font-size:16px; color:#1a1a2e; }
+</style>
+</head>
+<body>
+
+  <div class="topbar">Deen Day — Admin Panel</div>
+
+  <div class="center-box" id="loginBox">
+    <button class="login-btn" onclick="loginWithGoogle()">Sign in with Google</button>
+    <div class="denied" id="deniedMsg"></div>
+  </div>
+
+  <div class="panel" id="adminPanel">
+
+    <!-- ================= (ক) Daily Hadith / মাসআলা / প্রচলিত ভুল / মাসনুন আমল / কুরআনের শিক্ষা ================= -->
+    <div class="card">
+      <h3>Daily Hadith / মাসআলা / প্রচলিত ভুল / মাসনুন আমল / কুরআনের শিক্ষা</h3>
+      <input type="text" id="fx_link" placeholder="Link (optional)">
+      <input type="text" id="fx_title" placeholder="Title">
+      <div class="hint">কোন Section-এ Post যাবে বেছে নাও:</div>
+      <div class="chip-row" id="fx_sectionChips">
+        <button type="button" class="chip" data-val="Daily Hadith" onclick="selectFixedSection(this)">Daily Hadith</button>
+        <button type="button" class="chip" data-val="মাসআলা" onclick="selectFixedSection(this)">মাসআলা</button>
+        <button type="button" class="chip" data-val="প্রচলিত ভুল" onclick="selectFixedSection(this)">প্রচলিত ভুল</button>
+        <button type="button" class="chip" data-val="মাসনুন আমল" onclick="selectFixedSection(this)">মাসনুন আমল</button>
+        <button type="button" class="chip" data-val="কুরআনের শিক্ষা" onclick="selectFixedSection(this)">কুরআনের শিক্ষা</button>
+      </div>
+      <label style="font-size:13px; color:#555; display:block; margin-bottom:4px;">Schedule for later (optional)</label>
+      <input type="datetime-local" id="fx_schedule">
+      <button class="action" onclick="submitFixedSectionPost()">Post</button>
+      <div class="msg" id="fx_msg"></div>
+    </div>
+
+    <!-- ================= (খ) Bangla Caption ================= -->
+    <div class="card">
+      <h3>Bangla Caption</h3>
+      <div class="rt-toolbar">
+        <button type="button" onmousedown="event.preventDefault()" onclick="document.execCommand('bold')"><b>B</b></button>
+        <button type="button" onmousedown="event.preventDefault()" onclick="document.execCommand('italic')"><i>I</i></button>
+        <button type="button" onmousedown="event.preventDefault()" onclick="document.execCommand('underline')"><u>U</u></button>
+        <button type="button" onmousedown="event.preventDefault()" onclick="document.execCommand('strikeThrough')"><s>S</s></button>
+        <span class="rt-label">Text</span>
+        <input type="color" id="rtColorInput" value="#1a1a2e" onchange="restoreSelection(); applyColor(this.value)">
+        <span class="rt-label">Highlight</span>
+        <input type="color" id="rtHighlightInput" value="#fff59d" onchange="restoreSelection(); applyHighlight(this.value)">
+        <select onchange="restoreSelection(); applyFontSize(this.value); this.selectedIndex=0;">
+          <option value="">Size</option>
+          <option value="12">ছোট (12px)</option>
+          <option value="16">স্বাভাবিক (16px)</option>
+          <option value="20">বড় (20px)</option>
+          <option value="26">অনেক বড় (26px)</option>
+          <option value="32">Huge (32px)</option>
+        </select>
+        <button type="button" onmousedown="event.preventDefault()" onclick="document.execCommand('justifyLeft')">⬅</button>
+        <button type="button" onmousedown="event.preventDefault()" onclick="document.execCommand('justifyCenter')">↔</button>
+        <button type="button" onmousedown="event.preventDefault()" onclick="document.execCommand('justifyRight')">➡</button>
+        <button type="button" onmousedown="event.preventDefault()" onclick="restoreSelection(); insertLinkAtCursor()">🔗 Link</button>
+        <button type="button" onmousedown="event.preventDefault()" onclick="document.execCommand('removeFormat')">Clear</button>
+      </div>
+      <div id="postCustomTextEditor" class="rt-editor" contenteditable="true" data-placeholder="এখানে তোমার Post-এর লেখা লেখো..." onmouseup="saveSelection()" onkeyup="saveSelection()"></div>
+      <button class="action" onclick="submitBanglaCaptionPost()">Post</button>
+      <div class="msg" id="bc_msg"></div>
+    </div>
+
+    <!-- ================= (গ) Al Hadith ================= -->
+    <div class="card">
+      <h3>Al Hadith</h3>
+      <input type="text" id="ah_link" placeholder="Link (optional)">
+      <input type="text" id="ah_title" placeholder="Title">
+      <div class="hint">নিচে Playlist (Chapter) খুঁজে বেছে নাও:</div>
+      <input type="text" id="ah_plSearch" placeholder="🔍 Playlist খুঁজুন (যেমন: ঈমান, সালাত...)" oninput="searchPicker('ah')">
+      <div class="pl-results" id="ah_plResults"></div>
+      <div class="pl-selected" id="ah_plSelected"></div>
+      <label style="font-size:13px; color:#555; display:block; margin-bottom:4px;">Schedule for later (optional)</label>
+      <input type="datetime-local" id="ah_schedule">
+      <button class="action" onclick="submitSectionPost('ah')">Post</button>
+      <div class="msg" id="ah_msg"></div>
+    </div>
+
+    <!-- ================= (ঘ) Lives of the Prophets ================= -->
+    <div class="card">
+      <h3>Lives of the Prophets</h3>
+      <input type="text" id="lp_link" placeholder="Link (optional)">
+      <input type="text" id="lp_title" placeholder="Title">
+      <div class="hint">নিচে Playlist খুঁজে বেছে নাও:</div>
+      <input type="text" id="lp_plSearch" placeholder="🔍 Playlist খুঁজুন (যেমন: আদম, নূহ...)" oninput="searchPicker('lp')">
+      <div class="pl-results" id="lp_plResults"></div>
+      <div class="pl-selected" id="lp_plSelected"></div>
+      <label style="font-size:13px; color:#555; display:block; margin-bottom:4px;">Schedule for later (optional)</label>
+      <input type="datetime-local" id="lp_schedule">
+      <button class="action" onclick="submitSectionPost('lp')">Post</button>
+      <div class="msg" id="lp_msg"></div>
+    </div>
+
+    <!-- ================= (ঙ) বিষয়ভিত্তিক কুরআন ================= -->
+    <div class="card">
+      <h3>বিষয়ভিত্তিক কুরআন</h3>
+      <input type="text" id="qt_link" placeholder="Link (optional)">
+      <input type="text" id="qt_title" placeholder="Title">
+      <div class="hint">নিচে Playlist খুঁজে বেছে নাও:</div>
+      <input type="text" id="qt_plSearch" placeholder="🔍 Playlist খুঁজুন (যেমন: আল্লাহ তায়ালা...)" oninput="searchPicker('qt')">
+      <div class="pl-results" id="qt_plResults"></div>
+      <div class="pl-selected" id="qt_plSelected"></div>
+      <label style="font-size:13px; color:#555; display:block; margin-bottom:4px;">Schedule for later (optional)</label>
+      <input type="datetime-local" id="qt_schedule">
+      <button class="action" onclick="submitSectionPost('qt')">Post</button>
+      <div class="msg" id="qt_msg"></div>
+    </div>
+
+    <!-- ================= (চ) Lives of the Sahabah ================= -->
+    <div class="card">
+      <h3>Lives of the Sahabah</h3>
+      <input type="text" id="ls_link" placeholder="Link (optional)">
+      <input type="text" id="ls_title" placeholder="Title">
+      <div class="hint">নিচে Playlist খুঁজে বেছে নাও:</div>
+      <input type="text" id="ls_plSearch" placeholder="🔍 Playlist খুঁজুন (যেমন: আবু বকর...)" oninput="searchPicker('ls')">
+      <div class="pl-results" id="ls_plResults"></div>
+      <div class="pl-selected" id="ls_plSelected"></div>
+      <label style="font-size:13px; color:#555; display:block; margin-bottom:4px;">Schedule for later (optional)</label>
+      <input type="datetime-local" id="ls_schedule">
+      <button class="action" onclick="submitSectionPost('ls')">Post</button>
+      <div class="msg" id="ls_msg"></div>
+    </div>
+
+    <!-- ================= (ছ) Dua ================= -->
+    <div class="card">
+      <h3>Dua</h3>
+      <input type="text" id="dua_link" placeholder="Link (optional)">
+      <input type="text" id="dua_title" placeholder="Title">
+      <div class="hint">নিচে Playlist খুঁজে বেছে নাও:</div>
+      <input type="text" id="dua_plSearch" placeholder="🔍 Playlist খুঁজুন (যেমন: ঘুম, সফর...)" oninput="searchPicker('dua')">
+      <div class="pl-results" id="dua_plResults"></div>
+      <div class="pl-selected" id="dua_plSelected"></div>
+      <label style="font-size:13px; color:#555; display:block; margin-bottom:4px;">Schedule for later (optional)</label>
+      <input type="datetime-local" id="dua_schedule">
+      <button class="action" onclick="submitSectionPost('dua')">Post</button>
+      <div class="msg" id="dua_msg"></div>
+    </div>
+
+    <!-- ================= (জ) শুধু Manage Posts ================= -->
+    <div class="card">
+      <h3>Manage Posts</h3>
+      <input type="text" id="postSearchInput" placeholder="🔍 Post খুঁজুন..." oninput="filterPostsList()">
+      <div id="postListBox"></div>
+    </div>
+
+    <div class="signout"><a href="#" onclick="signOutNow()">Sign out</a></div>
+
+  </div>
+
+  <!-- ================= Edit Post Modal ================= -->
+  <div class="modal-backdrop" id="editPostModal">
+    <div class="modal-sheet">
+      <div class="modal-title">Edit Post <button class="modal-close" onclick="closeEditModal()">✕</button></div>
+      <input type="text" id="ep_link" placeholder="Link (optional)">
+      <input type="text" id="ep_title" placeholder="Title (optional)">
+      <label style="font-size:13px; color:#555; display:block; margin-bottom:4px;">Post Text</label>
+      <textarea id="ep_text" rows="6" placeholder="Post-এর লেখা..."></textarea>
+      <button class="action" onclick="saveEditPost()">Save Changes</button>
+      <div class="msg" id="ep_msg"></div>
+    </div>
+  </div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyD_EeH9komHBClHRN4vnm7E8N13Jt1zLzI",
+    authDomain: "deen-day-a0d49.firebaseapp.com",
+    projectId: "deen-day-a0d49",
+    storageBucket: "deen-day-a0d49.firebasestorage.app",
+    messagingSenderId: "870529394090",
+    appId: "1:870529394090:web:57e49e922ec5b6169ff7d3"
+  };
+
+  const ADMIN_EMAIL = "mdmojahidhossain0134@gmail.com";
+
+  const ONESIGNAL_APP_ID = "YOUR_ONESIGNAL_APP_ID"; // TODO: Deen Day-এর জন্য নতুন OneSignal app তৈরি করো
+  const ONESIGNAL_REST_KEY = "YOUR_ONESIGNAL_REST_API_KEY"; // TODO
+
+  function sendPushNotification(title, message) {
+    fetch('https://onesignal.com/api/v1/notifications', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Authorization': 'Basic ' + ONESIGNAL_REST_KEY
+      },
+      body: JSON.stringify({
+        app_id: ONESIGNAL_APP_ID,
+        included_segments: ['All'],
+        headings: { en: title },
+        contents: { en: message }
+      })
+    }).catch(err => console.log('Push notification error:', err));
+  }
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  const provider = new firebase.auth.GoogleAuthProvider();
+
+  let postsCache = {};
+  let playlistsCache = {};
+  let hadithGroupsCache = {};
+  let quranGroupsCache = {};
+
+  function loginWithGoogle() {
+    auth.signInWithPopup(provider).catch(err => {
+      document.getElementById('deniedMsg').innerText = "Login Error: " + err.message;
+    });
+  }
+  function signOutNow() { auth.signOut(); }
+
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      if (user.email === ADMIN_EMAIL) {
+        document.getElementById('loginBox').style.display = 'none';
+        document.getElementById('adminPanel').style.display = 'flex';
+        loadAllBackgroundData();
+        loadPostsList();
+      } else {
+        document.getElementById('deniedMsg').innerText =
+          "This Gmail (" + user.email + ") is not allowed to access the Admin Panel.";
+        auth.signOut();
+      }
+    } else {
+      document.getElementById('adminPanel').style.display = 'none';
+      document.getElementById('loginBox').style.display = 'flex';
+    }
+  });
+
+  function toggleMenu(menuId) {
+    document.querySelectorAll('.dropdown-menu').forEach(m => {
+      if (m.id !== menuId) m.classList.remove('open');
+    });
+    document.getElementById(menuId).classList.toggle('open');
+  }
+  document.addEventListener('click', (e) => {
+    if (!e.target.classList.contains('dots-btn')) {
+      document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('open'));
+    }
+  });
+
+  function escapeHtml(s) {
+    return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function escapeHtmlMultiline(s) {
+    return escapeHtml(s).replace(/\n/g, '<br>');
+  }
+
+  /* ================= Background data loading (silent — no UI list shown) ================= */
+  function loadAllBackgroundData() {
+    db.collection('hadithGroups').get().then(snap => {
+      hadithGroupsCache = {};
+      snap.forEach(doc => { hadithGroupsCache[doc.id] = doc.data(); });
+    });
+    db.collection('quranGroups').get().then(snap => {
+      quranGroupsCache = {};
+      snap.forEach(doc => { quranGroupsCache[doc.id] = doc.data(); });
+    });
+    db.collection('playlists').get().then(snap => {
+      playlistsCache = {};
+      snap.forEach(doc => { playlistsCache[doc.id] = doc.data(); });
+    });
+  }
+
+  async function getOrCreateStandalonePlaylist(name) {
+    const existing = Object.entries(playlistsCache).find(([id, p]) => p.name === name && !p.hadithGroupId && !p.quranGroupId);
+    if (existing) return existing[0];
+    const data = { name: name, section: name, hadithGroupId: null, quranGroupId: null, order: 0 };
+    const ref = await db.collection('playlists').add(data);
+    playlistsCache[ref.id] = data;
+    return ref.id;
+  }
+
+  /* ================= (ক) Fixed-section post (Daily Hadith / মাসআলা / প্রচলিত ভুল / মাসনুন আমল / কুরআনের শিক্ষা) ================= */
+  let fixedSectionSelected = null;
+  function selectFixedSection(btn) {
+    document.querySelectorAll('#fx_sectionChips .chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    fixedSectionSelected = btn.getAttribute('data-val');
+  }
+
+  async function submitFixedSectionPost() {
+    const link = document.getElementById('fx_link').value.trim();
+    const title = document.getElementById('fx_title').value.trim();
+    const scheduleValue = document.getElementById('fx_schedule').value;
+    const msg = document.getElementById('fx_msg');
+    if (!fixedSectionSelected) { msg.className = 'msg err'; msg.innerText = 'একটা Section বেছে নাও'; return; }
+    if (!title) { msg.className = 'msg err'; msg.innerText = 'Title আবশ্যক'; return; }
+    msg.className = 'msg'; msg.innerText = 'Posting...';
+    try {
+      const playlistId = await getOrCreateStandalonePlaylist(fixedSectionSelected);
+      await createPostCommon({
+        link, title, customText: escapeHtml(title), customTextPlain: title,
+        playlistId, scheduleValue, msg
+      });
+      document.getElementById('fx_link').value = '';
+      document.getElementById('fx_title').value = '';
+      document.getElementById('fx_schedule').value = '';
+      document.querySelectorAll('#fx_sectionChips .chip').forEach(b => b.classList.remove('active'));
+      fixedSectionSelected = null;
+    } catch (err) {
+      msg.className = 'msg err'; msg.innerText = 'Error: ' + err.message;
+    }
+  }
+
+  /* ================= (খ) Bangla Caption post ================= */
+  let savedRange = null;
+  function saveSelection() {
+    const sel = window.getSelection();
+    if (sel.rangeCount > 0 && document.getElementById('postCustomTextEditor').contains(sel.anchorNode)) {
+      savedRange = sel.getRangeAt(0).cloneRange();
+    }
+  }
+  function restoreSelection() {
+    document.getElementById('postCustomTextEditor').focus();
+    if (savedRange) {
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(savedRange);
+    }
+  }
+  function wrapSelectionWithStyle(styleText) {
+    const sel = window.getSelection();
+    if (!sel.rangeCount || sel.isCollapsed) { alert('আগে editor-এর মধ্যে যে টেক্সটে এটা apply করতে চাও সেটা সিলেক্ট করো'); return; }
+    const range = sel.getRangeAt(0);
+    const span = document.createElement('span');
+    span.style.cssText = styleText;
+    try { range.surroundContents(span); }
+    catch (e) { const content = range.extractContents(); span.appendChild(content); range.insertNode(span); }
+    sel.removeAllRanges();
+  }
+  function applyColor(color) { document.execCommand('foreColor', false, color); }
+  function applyHighlight(color) { document.execCommand('hiliteColor', false, color); }
+  function applyFontSize(px) { if (px) wrapSelectionWithStyle('font-size:' + px + 'px;'); }
+  function insertLinkAtCursor() {
+    const url = prompt('Link URL দাও (https:// সহ):');
+    if (!url) return;
+    const linkText = prompt('Link-এ কী লেখা দেখাবে:', url);
+    document.getElementById('postCustomTextEditor').focus();
+    document.execCommand('insertHTML', false,
+      '<a href="' + url.replace(/"/g, '&quot;') + '" target="_blank" style="color:#1e56b3;text-decoration:underline;">' + (linkText || url) + '</a>'
+    );
+  }
+
+  async function submitBanglaCaptionPost() {
+    const editor = document.getElementById('postCustomTextEditor');
+    const customText = editor.innerHTML.trim();
+    const customTextPlain = editor.innerText.trim();
+    const msg = document.getElementById('bc_msg');
+    if (!customTextPlain) { msg.className = 'msg err'; msg.innerText = 'কিছু লেখো'; return; }
+    msg.className = 'msg'; msg.innerText = 'Posting...';
+    try {
+      const playlistId = await getOrCreateStandalonePlaylist('Bangla Caption');
+      await createPostCommon({
+        link: '', title: null, customText, customTextPlain, playlistId, scheduleValue: '', msg
+      });
+      editor.innerHTML = '';
+    } catch (err) {
+      msg.className = 'msg err'; msg.innerText = 'Error: ' + err.message;
+    }
+  }
+
+  /* ================= (গ,ঘ,ঙ,চ,ছ) Playlist-search picker (shared) ================= */
+  const PICKER_CONFIG = {
+    ah: { filter: p => !!p.hadithGroupId, tag: p => (hadithGroupsCache[p.hadithGroupId] && hadithGroupsCache[p.hadithGroupId].name) || '' },
+    lp: { filter: p => p.section === 'Lives of the Prophets', tag: () => '' },
+    qt: { filter: p => !!p.quranGroupId, tag: p => (quranGroupsCache[p.quranGroupId] && quranGroupsCache[p.quranGroupId].name) || '' },
+    ls: { filter: p => p.section === 'Lives of the Sahabah', tag: () => '' },
+    dua: { filter: p => p.section === 'Dua', tag: () => '' }
+  };
+  let selectedPlaylist = {};
+
+  function searchPicker(key) {
+    const q = document.getElementById(key + '_plSearch').value.trim().toLowerCase();
+    const cfg = PICKER_CONFIG[key];
+    const box = document.getElementById(key + '_plResults');
+    if (!q) { box.style.display = 'none'; box.innerHTML = ''; return; }
+    const matches = Object.entries(playlistsCache)
+      .filter(([id, p]) => cfg.filter(p) && (p.name || '').toLowerCase().includes(q))
+      .slice(0, 30);
+    if (!matches.length) {
+      box.innerHTML = '<div class="pl-result-empty">কিছু পাওয়া যায়নি</div>';
+      box.style.display = 'block';
+      return;
+    }
+    box.innerHTML = matches.map(([id, p]) => {
+      const tag = cfg.tag(p);
+      return `<div class="pl-result-item" onclick="selectPicker('${key}','${id}')">${p.name}${tag ? '<span class="pl-result-tag">' + tag + '</span>' : ''}</div>`;
+    }).join('');
+    box.style.display = 'block';
+  }
+
+  function selectPicker(key, id) {
+    const p = playlistsCache[id];
+    if (!p) return;
+    selectedPlaylist[key] = { id, name: p.name };
+    document.getElementById(key + '_plSelected').innerHTML = `✅ নির্বাচিত: <b>${p.name}</b> — <a href="#" onclick="clearPicker('${key}');return false;">✕ বদলাও</a>`;
+    document.getElementById(key + '_plSearch').value = '';
+    document.getElementById(key + '_plResults').style.display = 'none';
+    document.getElementById(key + '_plResults').innerHTML = '';
+  }
+
+  function clearPicker(key) {
+    delete selectedPlaylist[key];
+    document.getElementById(key + '_plSelected').innerHTML = '';
+  }
+
+  async function submitSectionPost(key) {
+    const link = document.getElementById(key + '_link').value.trim();
+    const title = document.getElementById(key + '_title').value.trim();
+    const scheduleEl = document.getElementById(key + '_schedule');
+    const scheduleValue = scheduleEl ? scheduleEl.value : '';
+    const msg = document.getElementById(key + '_msg');
+    const sel = selectedPlaylist[key];
+    if (!title) { msg.className = 'msg err'; msg.innerText = 'Title আবশ্যক'; return; }
+    if (!sel) { msg.className = 'msg err'; msg.innerText = 'একটা Playlist বেছে নাও'; return; }
+    msg.className = 'msg'; msg.innerText = 'Posting...';
+    try {
+      await createPostCommon({
+        link, title, customText: escapeHtml(title), customTextPlain: title,
+        playlistId: sel.id, scheduleValue, msg
+      });
+      document.getElementById(key + '_link').value = '';
+      document.getElementById(key + '_title').value = '';
+      if (scheduleEl) scheduleEl.value = '';
+      clearPicker(key);
+    } catch (err) {
+      msg.className = 'msg err'; msg.innerText = 'Error: ' + err.message;
+    }
+  }
+
+  /* ================= Shared post creation ================= */
+  async function createPostCommon({ link, title, customText, customTextPlain, playlistId, scheduleValue, msg }) {
+    const now = new Date();
+    const timeText = now.toLocaleString();
+    const publishAt = scheduleValue ? new Date(scheduleValue) : now;
+    await db.collection('posts').add({
+      link: link || '',
+      title: title || null,
+      customText: customText,
+      customTextPlain: customTextPlain,
+      playlistId: playlistId,
+      time: firebase.firestore.FieldValue.serverTimestamp(),
+      timeText: timeText,
+      publishAt: firebase.firestore.Timestamp.fromDate(publishAt)
+    });
+    msg.className = 'msg ok';
+    if (publishAt > now) {
+      msg.innerText = 'Post Scheduled ✅ (' + publishAt.toLocaleString() + ')';
+    } else {
+      msg.innerText = 'Post created successfully ✅';
+      sendPushNotification('New Post on Deen Day', title || (customTextPlain || '').slice(0, 120));
+    }
+    loadPostsList();
+  }
+
+  /* ================= (জ) Manage Posts ================= */
+  function renderPostItem(box, id, data) {
+    const item = document.createElement('div');
+    item.className = 'list-item';
+    item.innerHTML = `
+      <div>
+        <div class="list-item-text">${data.title ? '📌 ' + data.title : (data.customTextPlain || 'Untitled Post')}</div>
+        ${!data.link ? '<span class="list-item-tag">📝 Text-only</span>' : ''}
+      </div>
+      <div class="menu-wrap">
+        <button class="dots-btn" onclick="toggleMenu('post-menu-${id}')">⋮</button>
+        <div class="dropdown-menu" id="post-menu-${id}">
+          <div onclick="editPost('${id}')">Edit</div>
+          <div onclick="sharePost('${id}')">Share</div>
+          <div onclick="deletePost('${id}')">Delete</div>
+        </div>
+      </div>
+    `;
+    box.appendChild(item);
+  }
+
+  function loadPostsList() {
+    const box = document.getElementById('postListBox');
+    db.collection('posts').orderBy('time', 'desc').get().then(snapshot => {
+      postsCache = {};
+      if (snapshot.empty) {
+        box.innerHTML = '<div class="empty-list">No posts yet</div>';
+        return;
+      }
+      snapshot.forEach(doc => { postsCache[doc.id] = doc.data(); });
+      filterPostsList();
+    });
+  }
+
+  function filterPostsList() {
+    const box = document.getElementById('postListBox');
+    const q = (document.getElementById('postSearchInput').value || '').trim().toLowerCase();
+    const entries = Object.entries(postsCache).filter(([id, data]) => {
+      if (!q) return true;
+      return ((data.title || '') + ' ' + (data.customTextPlain || '')).toLowerCase().includes(q);
+    });
+    if (entries.length === 0) {
+      box.innerHTML = '<div class="empty-list">' + (q ? 'কোনো Post পাওয়া যায়নি' : 'No posts yet') + '</div>';
+      return;
+    }
+    box.innerHTML = '';
+    entries.forEach(([id, data]) => renderPostItem(box, id, data));
+  }
+
+  function sharePost(id) {
+    const post = postsCache[id];
+    if (!post) return;
+    const shareUrl = window.location.origin + "/view.html?id=" + id + (post.link ? "&url=" + encodeURIComponent(post.link) : "");
+    const shareTitle = post.title || post.customTextPlain || 'Deen Day Post';
+    if (navigator.share) navigator.share({ title: shareTitle, url: shareUrl }).catch(() => {});
+    else navigator.clipboard.writeText(shareUrl);
+  }
+
+  function deletePost(id) {
+    if (!confirm("Are you sure you want to delete this post?")) return;
+    db.collection('posts').doc(id).delete().then(() => {
+      loadPostsList();
+    });
+  }
+
+  /* ================= Edit Post modal ================= */
+  let editingPostId = null;
+  function editPost(id) {
+    const data = postsCache[id];
+    if (!data) return;
+    editingPostId = id;
+    document.getElementById('ep_link').value = data.link || '';
+    document.getElementById('ep_title').value = data.title || '';
+    document.getElementById('ep_text').value = data.customTextPlain || '';
+    document.getElementById('ep_msg').innerText = '';
+    document.getElementById('editPostModal').classList.add('open');
+  }
+  function closeEditModal() {
+    document.getElementById('editPostModal').classList.remove('open');
+    editingPostId = null;
+  }
+  function saveEditPost() {
+    if (!editingPostId) return;
+    const link = document.getElementById('ep_link').value.trim();
+    const title = document.getElementById('ep_title').value.trim();
+    const text = document.getElementById('ep_text').value.trim();
+    const msg = document.getElementById('ep_msg');
+    if (!text) { msg.className = 'msg err'; msg.innerText = 'Post-এর লেখা খালি রাখা যাবে না'; return; }
+    db.collection('posts').doc(editingPostId).update({
+      link: link || '',
+      title: title || null,
+      customText: escapeHtmlMultiline(text),
+      customTextPlain: text
+    }).then(() => {
+      msg.className = 'msg ok'; msg.innerText = 'সংরক্ষণ হয়েছে ✅';
+      loadPostsList();
+      setTimeout(closeEditModal, 700);
+    }).catch(err => {
+      msg.className = 'msg err'; msg.innerText = 'Error: ' + err.message;
+    });
+  }
+</script>
+
+</body>
+</html>
