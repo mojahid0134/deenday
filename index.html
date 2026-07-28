@@ -458,14 +458,15 @@
 
   // ================================
   // WEBVIEW CONNECTION FIX (গুরুত্বপূর্ণ):
-  // App প্রথমবার Install করে খোলার সময় Post আসতে সময় লাগার মূল কারণ —
-  // Firestore ডিফল্টভাবে WebSocket-এর মতো একটা connection ব্যবহার করে,
-  // যেটা Sketchware Pro-এর Android WebView-তে ঠিকমতো/দ্রুত কাজ করে না।
-  // নিচের setting Firestore-কে বলে দিচ্ছে সরাসরি long-polling ব্যবহার
-  // করতে (auto-detect না — সেটা try-then-fallback করে যেটাতে দেরি হয়)।
+  // আগে এখানে experimentalForceLongPolling সবসময় জোর করে চালু রাখা ছিল,
+  // যেটা Sketchware WebView-এর জন্য ভালো কিন্তু normal browser/Chrome-এ
+  // (এবং modern WebView-তেও) উল্টো ধীর করে দেয় — এটাই Post দেখা দিতে দেরি
+  // হওয়ার মূল কারণ ছিল। এখন experimentalAutoDetectLongPolling ব্যবহার করা
+  // হচ্ছে — এটা প্রতিটা environment (browser বা WebView) নিজে থেকে বুঝে
+  // সবচেয়ে দ্রুত সংযোগ পদ্ধতি বেছে নেয়, তাই দুই জায়গাতেই দ্রুত load হবে।
   // ================================
   try {
-    db.settings({ experimentalForceLongPolling: true, merge: true });
+    db.settings({ experimentalAutoDetectLongPolling: true, merge: true });
   } catch (e) {
     console.log('db.settings() error:', e);
   }
@@ -611,16 +612,18 @@
           bodyHtml = `<div class="post-link" style="cursor:default;">${post.customText}</div>`;
         }
       } else if (hasLink) {
-        const titlePrefix = post.title ? `<div style="font-weight:800;color:#1a1a2e;margin-bottom:6px;">${post.title}</div>` : '';
+        // post.title আর post.customText সবসময় একই টেক্সট (Al Hadith/Prophets/Sahabah/
+        // Quran Topic/Dua পোস্টগুলোতে) — তাই দুইবার না দেখিয়ে শুধু একবারই দেখানো হচ্ছে।
+        const displayText = post.title || post.customText;
         if (APP_MODE && !isYouTubeLink(post.link)) {
           // App এর ভেতরে থাকলে আর YouTube না হলে সরাসরি link এ যাবে —
           // view.html হয়ে ঘুরে আসার extra hop লাগবে না, তাই একদম instant।
-          bodyHtml = `${titlePrefix}<a class="post-link" href="${post.link}" onclick="recordVisit('${post.id}')">${post.customText}</a>`;
+          bodyHtml = `<a class="post-link" style="font-weight:800;" href="${post.link}" onclick="recordVisit('${post.id}')">${displayText}</a>`;
         } else {
-          bodyHtml = `${titlePrefix}<a class="post-link" href="view.html?id=${post.id}&url=${encodeURIComponent(post.link)}${APP_MODE ? '&app=1' : ''}">${post.customText}</a>`;
+          bodyHtml = `<a class="post-link" style="font-weight:800;" href="view.html?id=${post.id}&url=${encodeURIComponent(post.link)}${APP_MODE ? '&app=1' : ''}">${displayText}</a>`;
         }
       } else {
-        const titlePrefix = post.title ? `<div style="font-weight:800;color:#1a1a2e;margin-bottom:6px;">${post.title}</div>` : '';
+        const titlePrefix = post.title && post.title !== post.customTextPlain ? `<div style="font-weight:800;color:#1a1a2e;margin-bottom:6px;">${post.title}</div>` : '';
         bodyHtml = `${titlePrefix}<div class="post-link" style="cursor:default;">${post.customText}</div>`;
       }
       const copyBtnHtml = sectionName === 'Bangla Caption' ? `<button class="action-btn" onclick="copyPostText('${post.id}')">${copyIcon} Copy</button>` : '';
