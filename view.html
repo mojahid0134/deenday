@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Post View</title>
+
+<!-- Speed optimization: connection আগে থেকেই warm করে রাখা হচ্ছে -->
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="dns-prefetch" href="https://www.youtube.com">
+
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Roboto, sans-serif; }
+  html, body { height:100%; }
+
+  .topbar {
+    background:linear-gradient(135deg,#2a1650,#4a2a6d);
+    color:#fff; padding:14px 16px; display:flex; align-items:center; gap:12px;
+    position:fixed; top:0; left:0; right:0; height:52px; z-index:20;
+  }
+  .back-btn {
+    background:rgba(255,255,255,0.15); border:none; color:#fff;
+    width:34px; height:34px; border-radius:50%; font-size:18px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .page-title {
+    font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    max-width:calc(100% - 60px);
+  }
+
+  .content-frame {
+    position:fixed; top:52px; left:0; right:0; bottom:128px;
+    width:100%; height:calc(100% - 180px); border:none;
+  }
+
+  .loading {
+    position:fixed; top:52px; left:0; right:0; bottom:128px;
+    display:flex; align-items:center; justify-content:center;
+    color:#999; font-size:14px; background:#f4f5f7; z-index:5;
+  }
+
+  .open-external {
+    position:fixed; bottom:144px; right:16px; z-index:15;
+    background:#1A1A2E; color:#fff; border:none;
+    padding:10px 16px; border-radius:20px; font-size:13px; font-weight:600;
+    box-shadow:0 2px 10px rgba(0,0,0,0.2);
+  }
+
+  .install-screen {
+    position:fixed; top:0; left:0; right:0; bottom:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:30px; text-align:center; background:#f4f5f7;
+  }
+  .install-screen h2 { color:#1A1A2E; font-size:20px; margin-bottom:12px; }
+  .install-screen p { color:#555; font-size:14px; margin-bottom:24px; line-height:1.5; }
+  .install-btn {
+    background:linear-gradient(135deg,#2a1650,#4a2a6d); color:#fff;
+    border:none; padding:14px 32px; border-radius:30px;
+    font-size:15px; font-weight:600;
+  }
+
+  .text-only-screen {
+    position:fixed; top:52px; left:0; right:0; bottom:128px;
+    overflow-y:auto; padding:20px; background:#f4f5f7;
+  }
+  .text-only-card {
+    background:#fff; border-radius:16px; padding:20px;
+    font-size:17px; line-height:1.8; color:#1a1a2e; font-weight:400;
+    word-wrap:break-word; overflow-wrap:break-word;
+  }
+  .text-only-card .post-title-view { font-size:20px; font-weight:800; margin-bottom:14px; color:#1a1a2e; }
+  .text-only-card a { color:#4a2a8d; }
+</style>
+</head>
+<body>
+
+<!-- =========================================================
+     STEP 1: এই script টা সবার আগে, সাথে সাথে রান হয়।
+     এটা Firebase-এর জন্য একদম অপেক্ষা করে না — তাই link/iframe
+     কোনো delay ছাড়াই instantly খুলে যায়।
+     ========================================================= -->
+<script>
+  window.addEventListener('pageshow', function(event) {
+    if (event.persisted) window.location.reload();
+  });
+
+  const PLAYSTORE_LINK = "https://play.google.com/store/apps/details?id=com.yourname.deenday";
+
+  const params = new URLSearchParams(window.location.search);
+  const rawUrl = params.get('url');
+  const postId = params.get('id');
+  const isAppMode = params.get('app') === '1';
+  const hasLink = rawUrl && rawUrl.trim() !== '';
+
+  function convertToEmbedUrl(originalUrl) {
+    try {
+      const u = new URL(originalUrl);
+      const host = u.hostname.replace('www.', '').replace('m.', '');
+      if (host === 'youtube.com' && u.searchParams.get('v')) {
+        return 'https://www.youtube.com/embed/' + u.searchParams.get('v');
+      }
+      if (host === 'youtu.be') {
+        const id = u.pathname.replace('/', '');
+        if (id) return 'https://www.youtube.com/embed/' + id;
+      }
+      if (host === 'youtube.com' && u.pathname.startsWith('/shorts/')) {
+        const id = u.pathname.split('/')[2];
+        if (id) return 'https://www.youtube.com/embed/' + id;
+      }
+    } catch (e) {}
+    return originalUrl;
+  }
+
+  function hideLoading() {
+    const msg = document.getElementById('loadingMsg');
+    if (msg) msg.style.display = 'none';
+  }
+
+  function openExternally() {
+    if (rawUrl) window.open(rawUrl, '_blank');
+  }
+
+  function addToHistory(id) {
+    let history = JSON.parse(localStorage.getItem('visitHistory') || '[]');
+    history = history.filter(h => h !== id);
+    history.unshift(id);
+    if (history.length > 200) history = history.slice(0, 200);
+    localStorage.setItem('visitHistory', JSON.stringify(history));
+  }
+
+  function goHome() { window.location.href = "index.html?app=1"; }
+
+  // ===== YouTube link কিনা check করা হচ্ছে =====
+  // YouTube নিজে iframe embed allow করে, তাই ওটা app-এর ভেতরেই দেখানো যায়।
+  // কিন্তু Facebook/article/blog ইত্যাদি বেশিরভাগ site তাদের নিজেদের
+  // security rule (X-Frame-Options) দিয়ে iframe-এর ভেতরে load হতে block করে দেয়।
+  // তখন iframe blank পড়ে থাকে আর অনেকক্ষণ ধরে "বেধে" থাকে — এটাই আসল কারণ।
+  function isYouTubeLink(originalUrl) {
+    try {
+      const u = new URL(originalUrl);
+      const host = u.hostname.replace('www.', '').replace('m.', '');
+      return host === 'youtube.com' || host === 'youtu.be';
+    } catch (e) { return false; }
+  }
+
+  const isYT = hasLink && isYouTubeLink(rawUrl);
+
+  // ===== NON-YOUTUBE link হলে সাথে সাথে, iframe/loading/Firebase কিছু ছাড়াই =====
+  // সরাসরি redirect হয়ে যাবে — normal link click করার মতোই instant।
+  // location.replace() ব্যবহার করা হয়েছে যাতে back button চাপলে এই খালি
+  // page-টা history-তে না থাকে এবং loop তৈরি না হয়।
+  if (isAppMode && hasLink && !isYT) {
+    window.location.replace(rawUrl);
+  } else if (!isAppMode) {
+    document.body.innerHTML = `
+      <div class="install-screen">
+        <h2>📱 Install the App</h2>
+        <p>To view this post, please install our app from Google Play Store.</p>
+        <button class="install-btn" onclick="window.location.href='${PLAYSTORE_LINK}'">Install App</button>
+      </div>
+    `;
+  } else {
+    document.body.innerHTML = `
+      <div class="topbar">
+        <button class="back-btn" id="backBtn">←</button>
+        <div class="page-title" id="pageTitle">Loading...</div>
+      </div>
+      ${hasLink
+        ? `<iframe class="content-frame" id="contentFrame"></iframe>
+           <div class="loading" id="loadingMsg">Loading post...</div>
+           <button class="open-external" id="openExtBtn">↗ Open in Browser</button>`
+        : `<div class="text-only-screen"><div class="text-only-card" id="textOnlyCard">Loading...</div></div>`
+      }
+    `;
+
+    document.getElementById('backBtn').addEventListener('click', goHome);
+    if (postId) addToHistory(postId);
+
+    if (hasLink) {
+      // ===== YouTube link, তাই iframe এ embed করে দেখানো হচ্ছে =====
+      const embedUrl = convertToEmbedUrl(rawUrl);
+      const frame = document.getElementById('contentFrame');
+      frame.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+      frame.setAttribute('allowfullscreen', 'true');
+      frame.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+      frame.src = embedUrl;
+      frame.onload = () => hideLoading();
+      setTimeout(hideLoading, 2500);
+      document.getElementById('openExtBtn').addEventListener('click', openExternally);
+    }
+  }
+</script>
+
+<!-- =========================================================
+     STEP 2: Firebase এখন background-এ, defer করে লোড হচ্ছে।
+     এটা শুধু post-এর title / text-only content বসানোর জন্য
+     ব্যবহার হবে — link খোলার সাথে এর কোনো সম্পর্ক নেই, তাই
+     এটা ধীরে লোড হলেও link খোলায় কোনো প্রভাব পড়বে না।
+     ========================================================= -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js" defer></script>
+<script defer>
+  window.addEventListener('DOMContentLoaded', function () {
+    if (!isAppMode) return;
+
+    const firebaseConfig = {
+    apiKey: "AIzaSyD_EeH9komHBClHRN4vnm7E8N13Jt1zLzI",
+    authDomain: "deen-day-a0d49.firebaseapp.com",
+    projectId: "deen-day-a0d49",
+    storageBucket: "deen-day-a0d49.firebasestorage.app",
+    messagingSenderId: "870529394090",
+    appId: "1:870529394090:web:57e49e922ec5b6169ff7d3"
+  };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    if (hasLink) {
+      if (postId) {
+        db.collection('posts').doc(postId).get().then(doc => {
+          if (doc.exists) {
+            const d = doc.data();
+            const titleEl = document.getElementById('pageTitle');
+            if (titleEl) titleEl.innerText = d.title || d.customTextPlain || 'Deen Day';
+          }
+        }).catch(() => {});
+      }
+    } else if (postId) {
+      // Text-only post: পুরো content Firestore থেকে আসছে
+      db.collection('posts').doc(postId).get().then(doc => {
+        const card = document.getElementById('textOnlyCard');
+        if (!doc.exists) {
+          if (card) card.innerText = 'Post পাওয়া যায়নি (হয়তো মুছে ফেলা হয়েছে)।';
+          return;
+        }
+        const d = doc.data();
+        const titleEl = document.getElementById('pageTitle');
+        if (titleEl) titleEl.innerText = d.title || 'Deen Day';
+        const titleHtml = d.title ? `<div class="post-title-view">${d.title}</div>` : '';
+        if (card) card.innerHTML = titleHtml + (d.customText || '');
+      }).catch(err => {
+        const card = document.getElementById('textOnlyCard');
+        if (card) card.innerText = 'Load করতে সমস্যা হয়েছে: ' + err.message;
+      });
+    } else {
+      const card = document.getElementById('textOnlyCard');
+      if (card) card.innerText = 'Post ID পাওয়া যায়নি।';
+    }
+  });
+</script>
+
+<script src="nav.js"></script>
+<script>NFNav.init('');</script>
+</body>
+</html>
