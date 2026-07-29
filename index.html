@@ -471,10 +471,23 @@
     console.log('db.settings() error:', e);
   }
 
-  // নোট: db.enablePersistence() ইচ্ছাকৃতভাবে বাদ দেওয়া হয়েছে — এটা
-  // IndexedDB-তে multi-tab lock negotiate করে, যেটা একাধিক Tab/App-instance
-  // খোলা থাকলে বরং delay বাড়াতে পারে। নিচে localStorage দিয়ে নিজস্ব
-  // instant-paint cache আছে যেটা একই কাজ অনেক সহজভাবে করে।
+  // ================================
+  // OFFLINE PERSISTENCE চালু করা (গুরুত্বপূর্ণ ফিক্স):
+  // আগে এটা ইচ্ছাকৃতভাবে বাদ দেওয়া হয়েছিল multi-tab browser lock-এর ভয়ে।
+  // কিন্তু Sketchware WebView app-এ একটাই instance/tab চলে (multiple tab
+  // এর ঝামেলা নেই), তাই এখন নিরাপদে চালু করা হচ্ছে। এটা IndexedDB-তে
+  // posts/playlists/groups স্থায়ীভাবে সেভ রাখে — তাই app বন্ধ করে আবার
+  // খোলা, বা কোনো Post থেকে Home-এ ফেরা — এসব ক্ষেত্রে network লাগার আগেই
+  // সাথে সাথে আগের ডাটা দেখাবে, তারপর ব্যাকগ্রাউন্ডে নতুন ডাটা sync হবে।
+  // নিচের localStorage instant-paint cache-টাও রাখা হলো অতিরিক্ত fallback হিসেবে।
+  // ================================
+  try {
+    db.enablePersistence({ synchronizeTabs: true }).catch(err => {
+      console.log('Firestore persistence error:', err.code);
+    });
+  } catch (e) {
+    console.log('enablePersistence() error:', e);
+  }
 
   let postsSnapshotReceived = false; // Firestore থেকে অন্তত একবার real response এসেছে কিনা — এটা false থাকলে "No posts yet" না দেখিয়ে "Loading posts..." দেখাবে
   let allPosts = [];
@@ -1041,12 +1054,12 @@
   // Pull-to-refresh এখন শুধু server-এর সাথে জোর করে একবার sync নিশ্চিত করে —
   // listener গুলো এমনিতেই সবসময় লাইভ থাকে, তাই এটা আগের মতো ভারী/ধীর না।
   function refreshData() {
-    Promise.all([
-      db.collection('posts').orderBy('time', 'desc').limit(60).get({ source: 'server' }),
-      db.collection('playlists').get({ source: 'server' }),
-      db.collection('hadithGroups').get({ source: 'server' }),
-      db.collection('quranGroups').get({ source: 'server' })
-    ]).catch(err => console.log('force-sync error (live listeners still active):', err))
+    // শুধু posts-কে জোর করে server থেকে refresh করা হচ্ছে (এটাই ঘন ঘন বদলায়)।
+    // playlists/hadithGroups/quranGroups এমনিতেই onSnapshot দিয়ে সবসময় live
+    // sync হয়ে আছে — এই বড় collection গুলো বারবার পুরোটা server থেকে জোর করে
+    // আনলে (বিশেষত মোবাইল ডাটায়) pull-to-refresh অনেক ধীর মনে হচ্ছিল, তাই বাদ দেওয়া হলো।
+    db.collection('posts').orderBy('time', 'desc').limit(60).get({ source: 'server' })
+      .catch(err => console.log('force-sync error (live listener still active):', err))
       .finally(() => { setTimeout(() => { pullIndicator.style.height = '0px'; }, 300); });
   }
 
