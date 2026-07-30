@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deen Day — Website Admin</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Roboto, sans-serif; }
+  body { background:#f4f5f7; min-height:100vh; }
+  .topbar { background:linear-gradient(135deg,#0369A1,#0EA5E9); color:#fff; padding:16px; text-align:center; font-size:18px; font-weight:600; }
+  .center-box { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 20px; }
+  .login-btn { background:#0369A1; color:#fff; border:none; padding:14px 28px; border-radius:30px; font-size:15px; font-weight:600; }
+  .denied { color:#c0392b; font-weight:600; margin-top:20px; text-align:center; }
+  .panel { padding:16px; display:none; flex-direction:column; gap:20px; }
+  .card { background:#fff; border-radius:14px; padding:18px; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+  .card h3 { margin-bottom:12px; font-size:16px; color:#0369A1; }
+  input, textarea { width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; font-size:14px; margin-bottom:10px; }
+  button.action { background:#0369A1; color:#fff; border:none; padding:12px; border-radius:8px; width:100%; font-size:15px; font-weight:600; }
+  .msg { font-size:13px; margin-top:8px; text-align:center; }
+  .msg.ok { color:#1e8e3e; }
+  .msg.err { color:#c0392b; }
+  .signout { text-align:center; margin-top:10px; }
+  .signout a { color:#666; font-size:13px; }
+  .pl-results { display:none; border:1px solid #ddd; border-radius:8px; max-height:220px; overflow-y:auto; margin:-4px 0 10px; }
+  .pl-result-item { padding:10px 12px; font-size:13.5px; color:#333; border-bottom:1px solid #f2f2f2; cursor:pointer; }
+  .pl-result-item:active { background:#f4f5f7; }
+  .pl-result-tag { font-size:11px; color:#999; margin-left:6px; }
+  .pl-result-empty { padding:12px; font-size:13px; color:#999; text-align:center; }
+  .pl-selected { font-size:13.5px; color:#1e8e3e; font-weight:600; margin:-4px 0 12px; }
+  .pl-selected a { font-weight:700; }
+  .list-item { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #f0f0f0; gap:10px; }
+  .list-item:last-child { border-bottom:none; }
+  .list-item-text { font-size:14px; color:#333; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .list-item-tag { font-size:11px; color:#999; display:block; margin-top:2px; }
+  .empty-list { color:#999; font-size:13px; text-align:center; padding:10px 0; }
+  .del-btn { background:#fdeaea; color:#c0392b; border:none; padding:6px 12px; border-radius:8px; font-size:12px; font-weight:700; flex-shrink:0; }
+</style>
+</head>
+<body>
+
+  <div class="topbar">Deen Day — Website Admin (Blogger Posts)</div>
+
+  <div class="center-box" id="loginBox">
+    <button class="login-btn" onclick="loginWithGoogle()">Sign in with Google</button>
+    <div class="denied" id="deniedMsg"></div>
+  </div>
+
+  <div class="panel" id="adminPanel">
+
+    <div class="card">
+      <h3>Add a Blogger Post to a Playlist</h3>
+      <input type="text" id="wp_link" placeholder="Blogger Post-এর পুরো Link (https://deendayz.blogspot.com/...)">
+      <input type="text" id="wp_title" placeholder="Title">
+      <div style="font-size:12px;color:#999;margin:-6px 0 10px;">নিচে Playlist খুঁজে বেছে নাও:</div>
+      <input type="text" id="wp_plSearch" placeholder="🔍 Playlist খুঁজুন..." oninput="searchPicker()">
+      <div class="pl-results" id="wp_plResults"></div>
+      <div class="pl-selected" id="wp_plSelected"></div>
+      <button class="action" onclick="submitWebPost()">Add to Playlist</button>
+      <div class="msg" id="wp_msg"></div>
+    </div>
+
+    <div class="card">
+      <h3>Manage Website Posts</h3>
+      <input type="text" id="wpSearchInput" placeholder="🔍 Post খুঁজুন..." oninput="filterList()">
+      <div id="wpListBox"></div>
+    </div>
+
+    <div class="signout"><a href="#" onclick="signOutNow()">Sign out</a></div>
+
+  </div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyD_EeH9komHBClHRN4vnm7E8N13Jt1zLzI",
+    authDomain: "deen-day-a0d49.firebaseapp.com",
+    projectId: "deen-day-a0d49",
+    storageBucket: "deen-day-a0d49.firebasestorage.app",
+    messagingSenderId: "870529394090",
+    appId: "1:870529394090:web:57e49e922ec5b6169ff7d3"
+  };
+  const ADMIN_EMAIL = "mdmojahidhossain0134@gmail.com";
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  const provider = new firebase.auth.GoogleAuthProvider();
+
+  let playlistsCache = {};
+  let hadithGroupsCache = {};
+  let quranGroupsCache = {};
+  let webPostsCache = {};
+  let selectedPlaylist = null;
+
+  function loginWithGoogle() {
+    auth.signInWithPopup(provider).catch(err => {
+      document.getElementById('deniedMsg').innerText = "Login Error: " + err.message;
+    });
+  }
+  function signOutNow() { auth.signOut(); }
+
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      if (user.email === ADMIN_EMAIL) {
+        document.getElementById('loginBox').style.display = 'none';
+        document.getElementById('adminPanel').style.display = 'flex';
+        loadBackgroundData();
+        loadWebPostsList();
+      } else {
+        document.getElementById('deniedMsg').innerText = "This Gmail (" + user.email + ") is not allowed.";
+        auth.signOut();
+      }
+    } else {
+      document.getElementById('adminPanel').style.display = 'none';
+      document.getElementById('loginBox').style.display = 'flex';
+    }
+  });
+
+  function escapeHtml(s) {
+    return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function loadBackgroundData() {
+    db.collection('hadithGroups').get().then(snap => {
+      hadithGroupsCache = {};
+      snap.forEach(doc => { hadithGroupsCache[doc.id] = doc.data(); });
+    });
+    db.collection('quranGroups').get().then(snap => {
+      quranGroupsCache = {};
+      snap.forEach(doc => { quranGroupsCache[doc.id] = doc.data(); });
+    });
+    db.collection('playlists').get().then(snap => {
+      playlistsCache = {};
+      snap.forEach(doc => { playlistsCache[doc.id] = doc.data(); });
+    });
+  }
+
+  function tagForPlaylist(p) {
+    if (p.hadithGroupId) return (hadithGroupsCache[p.hadithGroupId] && hadithGroupsCache[p.hadithGroupId].name) || 'Al Hadith';
+    if (p.quranGroupId) return (quranGroupsCache[p.quranGroupId] && quranGroupsCache[p.quranGroupId].name) || 'বিষয়ভিত্তিক কুরআন';
+    if (p.section) return p.section;
+    return '';
+  }
+
+  function searchPicker() {
+    const q = document.getElementById('wp_plSearch').value.trim().toLowerCase();
+    const box = document.getElementById('wp_plResults');
+    if (!q) { box.style.display = 'none'; box.innerHTML = ''; return; }
+    const matches = Object.entries(playlistsCache)
+      .filter(([id, p]) => (p.name || '').toLowerCase().includes(q))
+      .slice(0, 30);
+    if (!matches.length) {
+      box.innerHTML = '<div class="pl-result-empty">কিছু পাওয়া যায়নি</div>';
+      box.style.display = 'block';
+      return;
+    }
+    box.innerHTML = matches.map(([id, p]) => {
+      const tag = tagForPlaylist(p);
+      return `<div class="pl-result-item" onclick="selectPicker('${id}')">${escapeHtml(p.name)}${tag ? '<span class="pl-result-tag">' + escapeHtml(tag) + '</span>' : ''}</div>`;
+    }).join('');
+    box.style.display = 'block';
+  }
+
+  function selectPicker(id) {
+    const p = playlistsCache[id];
+    if (!p) return;
+    selectedPlaylist = { id, name: p.name };
+    document.getElementById('wp_plSelected').innerHTML = `✅ নির্বাচিত: <b>${escapeHtml(p.name)}</b> — <a href="#" onclick="clearPicker();return false;">✕ বদলাও</a>`;
+    document.getElementById('wp_plSearch').value = '';
+    document.getElementById('wp_plResults').style.display = 'none';
+    document.getElementById('wp_plResults').innerHTML = '';
+  }
+  function clearPicker() {
+    selectedPlaylist = null;
+    document.getElementById('wp_plSelected').innerHTML = '';
+  }
+
+  async function submitWebPost() {
+    const link = document.getElementById('wp_link').value.trim();
+    const title = document.getElementById('wp_title').value.trim();
+    const msg = document.getElementById('wp_msg');
+    if (!link) { msg.className = 'msg err'; msg.innerText = 'Blogger পোস্টের Link আবশ্যক'; return; }
+    if (!title) { msg.className = 'msg err'; msg.innerText = 'Title আবশ্যক'; return; }
+    if (!selectedPlaylist) { msg.className = 'msg err'; msg.innerText = 'একটা Playlist বেছে নাও'; return; }
+    msg.className = 'msg'; msg.innerText = 'Adding...';
+    try {
+      await db.collection('webPosts').add({
+        link, title,
+        playlistId: selectedPlaylist.id,
+        time: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      msg.className = 'msg ok'; msg.innerText = 'যোগ হয়েছে ✅';
+      document.getElementById('wp_link').value = '';
+      document.getElementById('wp_title').value = '';
+      clearPicker();
+      loadWebPostsList();
+    } catch (err) {
+      msg.className = 'msg err'; msg.innerText = 'Error: ' + err.message;
+    }
+  }
+
+  function loadWebPostsList() {
+    const box = document.getElementById('wpListBox');
+    db.collection('webPosts').orderBy('time', 'desc').get().then(snap => {
+      webPostsCache = {};
+      if (snap.empty) { box.innerHTML = '<div class="empty-list">No website posts yet</div>'; return; }
+      snap.forEach(doc => { webPostsCache[doc.id] = doc.data(); });
+      filterList();
+    });
+  }
+
+  function filterList() {
+    const box = document.getElementById('wpListBox');
+    const q = (document.getElementById('wpSearchInput').value || '').trim().toLowerCase();
+    const entries = Object.entries(webPostsCache).filter(([id, d]) => {
+      if (!q) return true;
+      return (d.title || '').toLowerCase().includes(q);
+    });
+    if (!entries.length) {
+      box.innerHTML = '<div class="empty-list">' + (q ? 'কোনো Post পাওয়া যায়নি' : 'No website posts yet') + '</div>';
+      return;
+    }
+    box.innerHTML = '';
+    entries.forEach(([id, d]) => {
+      const p = playlistsCache[d.playlistId];
+      const item = document.createElement('div');
+      item.className = 'list-item';
+      item.innerHTML = `
+        <div>
+          <div class="list-item-text">${escapeHtml(d.title)}</div>
+          <span class="list-item-tag">📁 ${escapeHtml(p ? p.name : 'Unknown playlist')}</span>
+        </div>
+        <button class="del-btn" onclick="deleteWebPost('${id}')">Delete</button>
+      `;
+      box.appendChild(item);
+    });
+  }
+
+  function deleteWebPost(id) {
+    if (!confirm("এই Post টা মুছে ফেলতে চাও?")) return;
+    db.collection('webPosts').doc(id).delete().then(loadWebPostsList);
+  }
+</script>
+
+</body>
+</html>
