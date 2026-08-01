@@ -464,15 +464,15 @@
 
   // ================================
   // WEBVIEW CONNECTION FIX (গুরুত্বপূর্ণ):
-  // আগে এখানে experimentalForceLongPolling সবসময় জোর করে চালু রাখা ছিল,
-  // যেটা Sketchware WebView-এর জন্য ভালো কিন্তু normal browser/Chrome-এ
-  // (এবং modern WebView-তেও) উল্টো ধীর করে দেয় — এটাই Post দেখা দিতে দেরি
-  // হওয়ার মূল কারণ ছিল। এখন experimentalAutoDetectLongPolling ব্যবহার করা
-  // হচ্ছে — এটা প্রতিটা environment (browser বা WebView) নিজে থেকে বুঝে
-  // সবচেয়ে দ্রুত সংযোগ পদ্ধতি বেছে নেয়, তাই দুই জায়গাতেই দ্রুত load হবে।
+  // experimentalAutoDetectLongPolling চেষ্টা করা হয়েছিল, কিন্তু আসল
+  // installed App-এর (Sketchware WebView) ভেতরে এই auto-detect পদ্ধতি
+  // network সংযোগ স্থাপন করতে অনেক দেরি করছিল / আটকে যাচ্ছিল — যেটা
+  // "Loading posts..." অনেকক্ষণ আটকে থাকার মূল কারণ। তাই আবার সরাসরি
+  // experimentalForceLongPolling ব্যবহার করা হচ্ছে — এটা WebView-এর জন্য
+  // সরাসরি, নির্ভরযোগ্য সংযোগ পদ্ধতি, কোনো auto-detect দেরি নেই।
   // ================================
   try {
-    db.settings({ experimentalAutoDetectLongPolling: true, merge: true });
+    db.settings({ experimentalForceLongPolling: true, merge: true });
   } catch (e) {
     console.log('db.settings() error:', e);
   }
