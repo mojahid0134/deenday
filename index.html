@@ -687,6 +687,11 @@
     if (allHadithGroups.length === 0) { feed.innerHTML = '<div class="empty-msg">এখনো কোনো Al Hadith Group যোগ করা হয়নি</div>'; return; }
     feed.innerHTML = '';
     allHadithGroups.forEach(group => {
+      // group.count field সবসময় 0 থাকে (bulk-import-এ শুধু একবারই সেট হয়),
+      // তাই এখন actual post সংখ্যা dynamically হিসাব করা হচ্ছে —
+      // এই Group-এর সব Playlist-এর ভেতরে মোট কতগুলো Post আছে তার যোগফল।
+      const groupPlaylistIds = allPlaylists.filter(p => p.hadithGroupId === group.id).map(p => p.id);
+      const postCount = allPosts.filter(p => groupPlaylistIds.includes(p.playlistId)).length;
       const card = document.createElement('div');
       card.className = 'hadith-book-card';
       card.innerHTML = `
@@ -696,7 +701,7 @@
           <div class="hadith-book-author">${group.author}</div>
         </div>
         <div class="hadith-book-count">
-          <div class="count-num">${toBnNumber(group.count)}</div>
+          <div class="count-num">${toBnNumber(postCount)}</div>
           <div class="count-lbl">হাদিস</div>
         </div>
       `;
