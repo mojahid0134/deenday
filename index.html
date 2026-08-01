@@ -157,8 +157,13 @@
   .empty-msg { text-align:center; color:#999; padding:40px 0; }
   .section-title { padding:14px 14px 0; font-size:16px; font-weight:800; color:#1a1a2e;
     display:flex; align-items:center; gap:8px; }
+  .section-title > span { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .back-btn-inline { background:#E0F2FE; border:none; width:32px; height:32px; border-radius:50%;
     display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#1a1a2e; font-size:18px; font-weight:800; }
+  .sort-toggle { display:flex; background:#f0f2f5; border-radius:20px; padding:3px; flex-shrink:0; }
+  .sort-btn { background:none; border:none; padding:6px 12px; border-radius:16px; font-size:11.5px;
+    font-weight:700; color:#666; white-space:nowrap; }
+  .sort-btn.active { background:#0EA5E9; color:#fff; }
 
   /* ===== Scroll to Top Button ===== */
   .scroll-top-btn { position:fixed; bottom:144px; right:20px; z-index:150;
@@ -792,12 +797,24 @@
     else if (key === 'history') showHistory();
   };
 
+  let currentPostSortOrder = 'oldest'; // 'oldest' or 'latest'
+  function sortByOrder(posts) {
+    const sorted = posts.slice();
+    if (currentPostSortOrder === 'latest') sorted.sort((a, b) => (b.rawTime || 0) - (a.rawTime || 0));
+    else sorted.sort((a, b) => (a.rawTime || 0) - (b.rawTime || 0));
+    return sorted;
+  }
+  function setPostSort(order) {
+    if (currentPostSortOrder === order) return;
+    currentPostSortOrder = order;
+    applyFilterState();
+  }
+
   function sortedPlaylistPosts(playlistId) {
-    // Playlist-এর ভেতরের Post গুলো add করার ক্রম অনুযায়ী (পুরনো → নতুন) দেখাবে,
-    // যাতে Hadith/Quran Topic-এর মতো sequential content ঠিক ক্রমে থাকে।
-    return allPosts.filter(p => p.playlistId === playlistId)
-      .slice()
-      .sort((a, b) => (a.rawTime || 0) - (b.rawTime || 0));
+    // ডিফল্টে পুরনো → নতুন ক্রমে দেখায় (Hadith/Quran Topic-এর মতো sequential
+    // content ঠিক ক্রমে থাকার জন্য), কিন্তু ব্যবহারকারী চাইলে "নতুন" বাটনে
+    // চেপে সবচেয়ে সাম্প্রতিক Post আগে দেখতে পারবে (sortByOrder ব্যবহার করে)।
+    return sortByOrder(allPosts.filter(p => p.playlistId === playlistId));
   }
 
   function applyFilterState() {
@@ -826,8 +843,7 @@
       // কোনো Post বাদ না পড়ে, তাই শুধু প্রথম matching playlist না খুঁজে,
       // এই নামের সব Playlist-এর Post একসাথে মিলিয়ে দেখানো হচ্ছে।
       const matchingIds = allPlaylists.filter(p => p.name === currentFilter.name).map(p => p.id);
-      const posts = allPosts.filter(p => matchingIds.includes(p.playlistId))
-        .slice().sort((a, b) => (a.rawTime || 0) - (b.rawTime || 0));
+      const posts = sortByOrder(allPosts.filter(p => matchingIds.includes(p.playlistId)));
       renderPosts(posts, backTitleHtml(currentFilter.name));
     } else if (currentFilter.type === 'playlistById') {
       setFilterTabs(null);
@@ -920,7 +936,12 @@
   }
 
   function backTitleHtml(title) {
-    return `<div class="section-title"><button class="back-btn-inline" onclick="goBackFilter()">←</button>${title ? `<span>${title}</span>` : ''}</div>`;
+    return `<div class="section-title"><button class="back-btn-inline" onclick="goBackFilter()">←</button>${title ? `<span>${title}</span>` : ''}
+      <div class="sort-toggle">
+        <button class="sort-btn ${currentPostSortOrder === 'oldest' ? 'active' : ''}" onclick="setPostSort('oldest')">পুরনো</button>
+        <button class="sort-btn ${currentPostSortOrder === 'latest' ? 'active' : ''}" onclick="setPostSort('latest')">নতুন</button>
+      </div>
+    </div>`;
   }
 
   function showAllPosts() { freshNav({ type: 'all' }); }
