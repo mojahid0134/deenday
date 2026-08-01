@@ -478,22 +478,22 @@
   }
 
   // ================================
-  // OFFLINE PERSISTENCE চালু করা (গুরুত্বপূর্ণ ফিক্স):
-  // আগে এটা ইচ্ছাকৃতভাবে বাদ দেওয়া হয়েছিল multi-tab browser lock-এর ভয়ে।
-  // কিন্তু Sketchware WebView app-এ একটাই instance/tab চলে (multiple tab
-  // এর ঝামেলা নেই), তাই এখন নিরাপদে চালু করা হচ্ছে। এটা IndexedDB-তে
-  // posts/playlists/groups স্থায়ীভাবে সেভ রাখে — তাই app বন্ধ করে আবার
-  // খোলা, বা কোনো Post থেকে Home-এ ফেরা — এসব ক্ষেত্রে network লাগার আগেই
-  // সাথে সাথে আগের ডাটা দেখাবে, তারপর ব্যাকগ্রাউন্ডে নতুন ডাটা sync হবে।
-  // নিচের localStorage instant-paint cache-টাও রাখা হলো অতিরিক্ত fallback হিসেবে।
+  // OFFLINE PERSISTENCE — ইচ্ছাকৃতভাবে বন্ধ রাখা হয়েছে:
+  // এটা আগে চালু করা হয়েছিল দ্রুত loading-এর জন্য, কিন্তু এর কোনো "মেয়াদ"
+  // (expiry) নেই — তাই App অনেকক্ষণ বন্ধ থাকলে (এই সময়ে কোনো Post delete
+  // হয়ে থাকলে) IndexedDB-এর অনেক পুরনো/ভুল ডাটা app খোলার সাথে সাথেই
+  // কিছুক্ষণের জন্য দেখিয়ে ফেলছিল (delete হওয়া Post-ও)। এখন এর বদলে নিচের
+  // localStorage cache ব্যবহার হচ্ছে, যেটাতে ২ ঘণ্টার সুনির্দিষ্ট
+  // freshness-limit বসানো আছে — তাই staleness নিয়ন্ত্রিত থাকে।
   // ================================
-  try {
-    db.enablePersistence({ synchronizeTabs: true }).catch(err => {
-      console.log('Firestore persistence error:', err.code);
-    });
-  } catch (e) {
-    console.log('enablePersistence() error:', e);
-  }
+  // try {
+  //   db.enablePersistence({ synchronizeTabs: true }).catch(err => {
+  //     console.log('Firestore persistence error:', err.code);
+  //   });
+  // } catch (e) {
+  //   console.log('enablePersistence() error:', e);
+  // }
+
 
   let postsSnapshotReceived = false; // Firestore থেকে অন্তত একবার real response এসেছে কিনা — এটা false থাকলে "No posts yet" না দেখিয়ে "Loading posts..." দেখাবে
   let allPosts = [];
