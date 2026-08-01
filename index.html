@@ -958,11 +958,16 @@
 
   (function instantPaintFromCache() {
     try {
-      const cp = JSON.parse(localStorage.getItem(CACHE_POSTS_KEY) || 'null');
+      // Posts আর এখানে localStorage cache থেকে instant-paint করা হচ্ছে না —
+      // Firestore-এর নিজস্ব offline persistence (IndexedDB) এখন এই কাজ করে,
+      // যেটা সবসময় সঠিক/সাম্প্রতিক অবস্থা দেখায়। localStorage-এর পুরনো
+      // snapshot ব্যবহার করলে app খোলার সাথে সাথে (delete হয়ে যাওয়া পোস্ট
+      // সহ) কিছুক্ষণের জন্য পুরনো/ভুল ডাটা দেখা যাচ্ছিল — এই bug ঠিক করতেই
+      // posts-এর জন্য এই cache path বাদ দেওয়া হলো। Playlists/Groups কম
+      // ঘন ঘন বদলায় বলে সেগুলোর instant-paint এখনো রাখা হয়েছে (নিরাপদ)।
       const cpl = JSON.parse(localStorage.getItem(CACHE_PLAYLISTS_KEY) || 'null');
       const chg = JSON.parse(localStorage.getItem(CACHE_HADITH_GROUPS_KEY) || 'null');
       const cqg = JSON.parse(localStorage.getItem(CACHE_QURAN_GROUPS_KEY) || 'null');
-      if (cp) allPosts = cp.filter(isVisibleNow);
       if (cpl) allPlaylists = cpl;
       if (chg) allHadithGroups = chg;
       if (cqg) allQuranGroups = cqg;
