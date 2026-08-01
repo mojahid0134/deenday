@@ -822,8 +822,13 @@
       renderPosts(ids.map(id => allPosts.find(p => p.id === id)).filter(p => p));
     } else if (currentFilter.type === 'playlist') {
       setFilterTabs(null);
-      const pl = allPlaylists.find(p => p.name === currentFilter.name);
-      renderPosts(pl ? sortedPlaylistPosts(pl.id) : [], backTitleHtml(pl ? pl.name : ''));
+      // একই নামের একাধিক Playlist ডকুমেন্ট (ভুলবশত ডুপ্লিকেট) থাকলেও যেন
+      // কোনো Post বাদ না পড়ে, তাই শুধু প্রথম matching playlist না খুঁজে,
+      // এই নামের সব Playlist-এর Post একসাথে মিলিয়ে দেখানো হচ্ছে।
+      const matchingIds = allPlaylists.filter(p => p.name === currentFilter.name).map(p => p.id);
+      const posts = allPosts.filter(p => matchingIds.includes(p.playlistId))
+        .slice().sort((a, b) => (a.rawTime || 0) - (b.rawTime || 0));
+      renderPosts(posts, backTitleHtml(currentFilter.name));
     } else if (currentFilter.type === 'playlistById') {
       setFilterTabs(null);
       const pl = allPlaylists.find(p => p.id === currentFilter.id);
