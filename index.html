@@ -616,16 +616,18 @@
       card.className = 'post-card';
       let bodyHtml;
       if (sectionName === 'Daily Hadith') {
-        // Daily Hadith: Title থাকলে শুধু Title দেখাবে (click করলে পুরো text খুলবে)।
-        // Title না থাকলে সরাসরি Post Text-ই দেখাবে (অন্য section-এর মতো)।
-        if (post.title) {
-          bodyHtml = `<a class="post-link" style="font-weight:800;" href="view.html?id=${post.id}${APP_MODE ? '&app=1' : ''}">${post.title}</a>`;
-        } else if (hasLink) {
+        // Daily Hadith: Link থাকলে সেটাই খুলবে (অন্য section-এর মতো)।
+        // Link না থাকলে, Title থাকলে ক্লিক করলে পুরো text view.html-এ খুলবে।
+        // দুটোই না থাকলে সরাসরি Post Text দেখাবে।
+        if (hasLink) {
+          const displayText = post.title || post.customText;
           if (APP_MODE && !isYouTubeLink(post.link)) {
-            bodyHtml = `<a class="post-link" href="${post.link}" onclick="recordVisit('${post.id}')">${post.customText}</a>`;
+            bodyHtml = `<a class="post-link" style="font-weight:800;" href="${post.link}" onclick="recordVisit('${post.id}')">${displayText}</a>`;
           } else {
-            bodyHtml = `<a class="post-link" href="view.html?id=${post.id}&url=${encodeURIComponent(post.link)}${APP_MODE ? '&app=1' : ''}">${post.customText}</a>`;
+            bodyHtml = `<a class="post-link" style="font-weight:800;" href="view.html?id=${post.id}&url=${encodeURIComponent(post.link)}${APP_MODE ? '&app=1' : ''}">${displayText}</a>`;
           }
+        } else if (post.title) {
+          bodyHtml = `<a class="post-link" style="font-weight:800;" href="view.html?id=${post.id}${APP_MODE ? '&app=1' : ''}">${post.title}</a>`;
         } else {
           bodyHtml = `<div class="post-link" style="cursor:default;">${post.customText}</div>`;
         }
