@@ -157,13 +157,8 @@
   .empty-msg { text-align:center; color:#999; padding:40px 0; }
   .section-title { padding:14px 14px 0; font-size:16px; font-weight:800; color:#1a1a2e;
     display:flex; align-items:center; gap:8px; }
-  .section-title > span { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .back-btn-inline { background:#E0F2FE; border:none; width:32px; height:32px; border-radius:50%;
     display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#1a1a2e; font-size:18px; font-weight:800; }
-  .sort-toggle { display:flex; background:#f0f2f5; border-radius:20px; padding:3px; flex-shrink:0; }
-  .sort-btn { background:none; border:none; padding:6px 12px; border-radius:16px; font-size:11.5px;
-    font-weight:700; color:#666; white-space:nowrap; }
-  .sort-btn.active { background:#0EA5E9; color:#fff; }
 
   /* ===== Scroll to Top Button ===== */
   .scroll-top-btn { position:fixed; bottom:144px; right:20px; z-index:150;
@@ -386,24 +381,24 @@
   function copyNumber() { navigator.clipboard.writeText('+880XXXXXXXXXX'); }
   document.getElementById('moreModalClose').addEventListener('click', () => document.getElementById('moreModal').classList.remove('open'));
 
-  const CATEGORY_SECTIONS = ['Lives of the Prophets', 'Lives of the Sahabah', 'Dua', 'Nasheed'];
+  const CATEGORY_SECTIONS = ['Lives of the Prophets', 'Lives of the Sahabah', 'Dua', 'মাসআলা', 'প্রচলিত ভুল', 'মাসনুন আমল', 'কুরআনের শিক্ষা', 'Nasheed'];
 
   const SECTION_STYLES = {
-    'Quran': { bg:'#f0ecfb', color:'#4a2a8d', emoji:'📖' },
-    'Daily Hadith': { bg:'#e9f5e8', color:'#2e7d32', emoji:'📜' },
-    'Al Hadith': { bg:'#fdf3e7', color:'#a8630a', emoji:'📚' },
-    'বিষয়ভিত্তিক কুরআন': { bg:'#e0f7fa', color:'#00838f', emoji:'🎯' },
-    'Lives of the Prophets': { bg:'#eeeafc', color:'#4a2a8d', emoji:'🕌' },
-    'Lives of the Sahabah': { bg:'#fdf1e0', color:'#c9820a', emoji:'👥' },
+    'Quran': { bg:'#f0ecfb', color:'#4a2a8d', text:'قرآن' },
+    'Daily Hadith': { bg:'#e9f5e8', color:'#2e7d32', svg:`<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>` },
+    'Al Hadith': { bg:'#fdf3e7', color:'#a8630a', svg:`<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>` },
+    'বিষয়ভিত্তিক কুরআন': { bg:'#e0f7fa', color:'#00838f', svg:`<path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/>` },
+    'Lives of the Prophets': { bg:'#eeeafc', color:'#4a2a8d', svg:`<path d="M12 2v3"/><circle cx="12" cy="2.3" r="0.8" fill="currentColor" stroke="none"/><path d="M6 21v-6a6 6 0 0 1 12 0v6"/><line x1="4" y1="21" x2="20" y2="21"/>` },
+    'Lives of the Sahabah': { bg:'#fdf1e0', color:'#c9820a', svg:`<path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>` },
     'Dua': { bg:'#e8f0fb', color:'#1e56b3', emoji:'🤲' },
     '99 Names': { bg:'#e3f6f2', color:'#0e8f7a', text:'الله' },
-    'Tasbih': { bg:'#f5ebe0', color:'#8a5a2e', emoji:'📿' },
-    'মাসআলা': { bg:'#e3f2f8', color:'#0e6e8f', emoji:'📘' },
-    'প্রচলিত ভুল': { bg:'#fdeaea', color:'#c0392b', emoji:'⚠️' },
-    'মাসনুন আমল': { bg:'#eafaf0', color:'#1e8a5f', emoji:'📝' },
-    'কুরআনের শিক্ষা': { bg:'#fbf3e2', color:'#a8790a', emoji:'🎓' },
-    'Bangla Caption': { bg:'#fbeaf1', color:'#c22a72', emoji:'✍️' },
-    'Nasheed': { bg:'#eaf4e6', color:'#4d8a2e', emoji:'🎵' }
+    'Tasbih': { bg:'#f5ebe0', color:'#8a5a2e', svg:`<circle cx="12" cy="4" r="1.6"/><circle cx="18.5" cy="7.5" r="1.6"/><circle cx="20.5" cy="14" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/><circle cx="10.5" cy="21" r="1.6"/><circle cx="5" cy="17" r="1.6"/><circle cx="3.5" cy="10.5" r="1.6"/><circle cx="7" cy="4.5" r="1.6"/>` },
+    'মাসআলা': { bg:'#e3f2f8', color:'#0e6e8f', svg:`<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>` },
+    'প্রচলিত ভুল': { bg:'#fdeaea', color:'#c0392b', svg:`<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>` },
+    'মাসনুন আমল': { bg:'#eafaf0', color:'#1e8a5f', svg:`<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h7"/><path d="M9 11h7"/>` },
+    'কুরআনের শিক্ষা': { bg:'#fbf3e2', color:'#a8790a', svg:`<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>` },
+    'Bangla Caption': { bg:'#fbeaf1', color:'#c22a72', svg:`<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>` },
+    'Nasheed': { bg:'#eaf4e6', color:'#4d8a2e', svg:`<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>` }
   };
   const SECTION_ORDER = ['Quran','Daily Hadith','Al Hadith','বিষয়ভিত্তিক কুরআন','Lives of the Prophets','Lives of the Sahabah','Dua','99 Names','Tasbih','মাসআলা','প্রচলিত ভুল','মাসনুন আমল','কুরআনের শিক্ষা','Bangla Caption','Nasheed'];
   const MORE_ICON = { bg:'#efeef2', color:'#555', svg:`<circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/>` };
@@ -411,7 +406,6 @@
   function buildIconHtml(st) {
     if (st.emoji) return `<span style="font-size:24px; line-height:1;">${st.emoji}</span>`;
     if (st.text) return `<span style="font-size:22px; font-weight:700; line-height:1; font-family:'Traditional Arabic','Noto Naskh Arabic',serif;">${st.text}</span>`;
-    if (st.customSvg) return `<svg viewBox="0 0 108 108">${st.customSvg}</svg>`;
     return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${st.svg}</svg>`;
   }
 
@@ -464,36 +458,36 @@
 
   // ================================
   // WEBVIEW CONNECTION FIX (গুরুত্বপূর্ণ):
-  // experimentalAutoDetectLongPolling চেষ্টা করা হয়েছিল, কিন্তু আসল
-  // installed App-এর (Sketchware WebView) ভেতরে এই auto-detect পদ্ধতি
-  // network সংযোগ স্থাপন করতে অনেক দেরি করছিল / আটকে যাচ্ছিল — যেটা
-  // "Loading posts..." অনেকক্ষণ আটকে থাকার মূল কারণ। তাই আবার সরাসরি
-  // experimentalForceLongPolling ব্যবহার করা হচ্ছে — এটা WebView-এর জন্য
-  // সরাসরি, নির্ভরযোগ্য সংযোগ পদ্ধতি, কোনো auto-detect দেরি নেই।
+  // আগে এখানে experimentalForceLongPolling সবসময় জোর করে চালু রাখা ছিল,
+  // যেটা Sketchware WebView-এর জন্য ভালো কিন্তু normal browser/Chrome-এ
+  // (এবং modern WebView-তেও) উল্টো ধীর করে দেয় — এটাই Post দেখা দিতে দেরি
+  // হওয়ার মূল কারণ ছিল। এখন experimentalAutoDetectLongPolling ব্যবহার করা
+  // হচ্ছে — এটা প্রতিটা environment (browser বা WebView) নিজে থেকে বুঝে
+  // সবচেয়ে দ্রুত সংযোগ পদ্ধতি বেছে নেয়, তাই দুই জায়গাতেই দ্রুত load হবে।
   // ================================
   try {
-    db.settings({ experimentalForceLongPolling: true, merge: true });
+    db.settings({ experimentalAutoDetectLongPolling: true, merge: true });
   } catch (e) {
     console.log('db.settings() error:', e);
   }
 
   // ================================
-  // OFFLINE PERSISTENCE — ইচ্ছাকৃতভাবে বন্ধ রাখা হয়েছে:
-  // এটা আগে চালু করা হয়েছিল দ্রুত loading-এর জন্য, কিন্তু এর কোনো "মেয়াদ"
-  // (expiry) নেই — তাই App অনেকক্ষণ বন্ধ থাকলে (এই সময়ে কোনো Post delete
-  // হয়ে থাকলে) IndexedDB-এর অনেক পুরনো/ভুল ডাটা app খোলার সাথে সাথেই
-  // কিছুক্ষণের জন্য দেখিয়ে ফেলছিল (delete হওয়া Post-ও)। এখন এর বদলে নিচের
-  // localStorage cache ব্যবহার হচ্ছে, যেটাতে ২ ঘণ্টার সুনির্দিষ্ট
-  // freshness-limit বসানো আছে — তাই staleness নিয়ন্ত্রিত থাকে।
+  // OFFLINE PERSISTENCE চালু করা (গুরুত্বপূর্ণ ফিক্স):
+  // আগে এটা ইচ্ছাকৃতভাবে বাদ দেওয়া হয়েছিল multi-tab browser lock-এর ভয়ে।
+  // কিন্তু Sketchware WebView app-এ একটাই instance/tab চলে (multiple tab
+  // এর ঝামেলা নেই), তাই এখন নিরাপদে চালু করা হচ্ছে। এটা IndexedDB-তে
+  // posts/playlists/groups স্থায়ীভাবে সেভ রাখে — তাই app বন্ধ করে আবার
+  // খোলা, বা কোনো Post থেকে Home-এ ফেরা — এসব ক্ষেত্রে network লাগার আগেই
+  // সাথে সাথে আগের ডাটা দেখাবে, তারপর ব্যাকগ্রাউন্ডে নতুন ডাটা sync হবে।
+  // নিচের localStorage instant-paint cache-টাও রাখা হলো অতিরিক্ত fallback হিসেবে।
   // ================================
-  // try {
-  //   db.enablePersistence({ synchronizeTabs: true }).catch(err => {
-  //     console.log('Firestore persistence error:', err.code);
-  //   });
-  // } catch (e) {
-  //   console.log('enablePersistence() error:', e);
-  // }
-
+  try {
+    db.enablePersistence({ synchronizeTabs: true }).catch(err => {
+      console.log('Firestore persistence error:', err.code);
+    });
+  } catch (e) {
+    console.log('enablePersistence() error:', e);
+  }
 
   let postsSnapshotReceived = false; // Firestore থেকে অন্তত একবার real response এসেছে কিনা — এটা false থাকলে "No posts yet" না দেখিয়ে "Loading posts..." দেখাবে
   let allPosts = [];
@@ -617,18 +611,16 @@
       card.className = 'post-card';
       let bodyHtml;
       if (sectionName === 'Daily Hadith') {
-        // Daily Hadith: Link থাকলে সেটাই খুলবে (অন্য section-এর মতো)।
-        // Link না থাকলে, Title থাকলে ক্লিক করলে পুরো text view.html-এ খুলবে।
-        // দুটোই না থাকলে সরাসরি Post Text দেখাবে।
-        if (hasLink) {
-          const displayText = post.title || post.customText;
-          if (APP_MODE && !isYouTubeLink(post.link)) {
-            bodyHtml = `<a class="post-link" style="font-weight:800;" href="${post.link}" onclick="recordVisit('${post.id}')">${displayText}</a>`;
-          } else {
-            bodyHtml = `<a class="post-link" style="font-weight:800;" href="view.html?id=${post.id}&url=${encodeURIComponent(post.link)}${APP_MODE ? '&app=1' : ''}">${displayText}</a>`;
-          }
-        } else if (post.title) {
+        // Daily Hadith: Title থাকলে শুধু Title দেখাবে (click করলে পুরো text খুলবে)।
+        // Title না থাকলে সরাসরি Post Text-ই দেখাবে (অন্য section-এর মতো)।
+        if (post.title) {
           bodyHtml = `<a class="post-link" style="font-weight:800;" href="view.html?id=${post.id}${APP_MODE ? '&app=1' : ''}">${post.title}</a>`;
+        } else if (hasLink) {
+          if (APP_MODE && !isYouTubeLink(post.link)) {
+            bodyHtml = `<a class="post-link" href="${post.link}" onclick="recordVisit('${post.id}')">${post.customText}</a>`;
+          } else {
+            bodyHtml = `<a class="post-link" href="view.html?id=${post.id}&url=${encodeURIComponent(post.link)}${APP_MODE ? '&app=1' : ''}">${post.customText}</a>`;
+          }
         } else {
           bodyHtml = `<div class="post-link" style="cursor:default;">${post.customText}</div>`;
         }
@@ -692,11 +684,6 @@
     if (allHadithGroups.length === 0) { feed.innerHTML = '<div class="empty-msg">এখনো কোনো Al Hadith Group যোগ করা হয়নি</div>'; return; }
     feed.innerHTML = '';
     allHadithGroups.forEach(group => {
-      // group.count field সবসময় 0 থাকে (bulk-import-এ শুধু একবারই সেট হয়),
-      // তাই এখন actual post সংখ্যা dynamically হিসাব করা হচ্ছে —
-      // এই Group-এর সব Playlist-এর ভেতরে মোট কতগুলো Post আছে তার যোগফল।
-      const groupPlaylistIds = allPlaylists.filter(p => p.hadithGroupId === group.id).map(p => p.id);
-      const postCount = allPosts.filter(p => groupPlaylistIds.includes(p.playlistId)).length;
       const card = document.createElement('div');
       card.className = 'hadith-book-card';
       card.innerHTML = `
@@ -706,7 +693,7 @@
           <div class="hadith-book-author">${group.author}</div>
         </div>
         <div class="hadith-book-count">
-          <div class="count-num">${toBnNumber(postCount)}</div>
+          <div class="count-num">${toBnNumber(group.count)}</div>
           <div class="count-lbl">হাদিস</div>
         </div>
       `;
@@ -797,38 +784,16 @@
     else if (key === 'history') showHistory();
   };
 
-  let currentPostSortOrder = 'oldest'; // 'oldest' or 'latest'
-  function sortByOrder(posts) {
-    const sorted = posts.slice();
-    if (currentPostSortOrder === 'latest') sorted.sort((a, b) => (b.rawTime || 0) - (a.rawTime || 0));
-    else sorted.sort((a, b) => (a.rawTime || 0) - (b.rawTime || 0));
-    return sorted;
-  }
-  function setPostSort(order) {
-    if (currentPostSortOrder === order) return;
-    currentPostSortOrder = order;
-    applyFilterState();
-  }
-
   function sortedPlaylistPosts(playlistId) {
-    // ডিফল্টে পুরনো → নতুন ক্রমে দেখায় (Hadith/Quran Topic-এর মতো sequential
-    // content ঠিক ক্রমে থাকার জন্য), কিন্তু ব্যবহারকারী চাইলে "নতুন" বাটনে
-    // চেপে সবচেয়ে সাম্প্রতিক Post আগে দেখতে পারবে (sortByOrder ব্যবহার করে)।
-    return sortByOrder(allPosts.filter(p => p.playlistId === playlistId));
+    // Playlist-এর ভেতরের Post গুলো add করার ক্রম অনুযায়ী (পুরনো → নতুন) দেখাবে,
+    // যাতে Hadith/Quran Topic-এর মতো sequential content ঠিক ক্রমে থাকে।
+    return allPosts.filter(p => p.playlistId === playlistId)
+      .slice()
+      .sort((a, b) => (a.rawTime || 0) - (b.rawTime || 0));
   }
 
   function applyFilterState() {
-    if (currentFilter.type === 'all') {
-      setFilterTabs('filterYourFeeds');
-      // Al Hadith-এর Post গুলো Home Feed-এ দেখাবে না (শুধু Al Hadith সেকশনের
-      // ভেতরে Group/Playlist ঘুরে দেখলে দেখাবে) — playlist.hadithGroupId
-      // থাকলেই বোঝা যায় সেটা Al Hadith-এর কোনো Playlist।
-      const homePosts = allPosts.filter(p => {
-        const pl = allPlaylists.find(pl2 => pl2.id === p.playlistId);
-        return !(pl && pl.hadithGroupId);
-      });
-      renderPosts(homePosts);
-    }
+    if (currentFilter.type === 'all') { setFilterTabs('filterYourFeeds'); renderPosts(allPosts); }
     else if (currentFilter.type === 'history') {
       setFilterTabs('filterHistory');
       const ids = JSON.parse(localStorage.getItem('visitHistory') || '[]');
@@ -839,12 +804,8 @@
       renderPosts(ids.map(id => allPosts.find(p => p.id === id)).filter(p => p));
     } else if (currentFilter.type === 'playlist') {
       setFilterTabs(null);
-      // একই নামের একাধিক Playlist ডকুমেন্ট (ভুলবশত ডুপ্লিকেট) থাকলেও যেন
-      // কোনো Post বাদ না পড়ে, তাই শুধু প্রথম matching playlist না খুঁজে,
-      // এই নামের সব Playlist-এর Post একসাথে মিলিয়ে দেখানো হচ্ছে।
-      const matchingIds = allPlaylists.filter(p => p.name === currentFilter.name).map(p => p.id);
-      const posts = sortByOrder(allPosts.filter(p => matchingIds.includes(p.playlistId)));
-      renderPosts(posts, backTitleHtml(currentFilter.name));
+      const pl = allPlaylists.find(p => p.name === currentFilter.name);
+      renderPosts(pl ? sortedPlaylistPosts(pl.id) : [], backTitleHtml(pl ? pl.name : ''));
     } else if (currentFilter.type === 'playlistById') {
       setFilterTabs(null);
       const pl = allPlaylists.find(p => p.id === currentFilter.id);
@@ -936,12 +897,7 @@
   }
 
   function backTitleHtml(title) {
-    return `<div class="section-title"><button class="back-btn-inline" onclick="goBackFilter()">←</button>${title ? `<span>${title}</span>` : ''}
-      <div class="sort-toggle">
-        <button class="sort-btn ${currentPostSortOrder === 'oldest' ? 'active' : ''}" onclick="setPostSort('oldest')">পুরনো</button>
-        <button class="sort-btn ${currentPostSortOrder === 'latest' ? 'active' : ''}" onclick="setPostSort('latest')">নতুন</button>
-      </div>
-    </div>`;
+    return `<div class="section-title"><button class="back-btn-inline" onclick="goBackFilter()">←</button>${title ? `<span>${title}</span>` : ''}</div>`;
   }
 
   function showAllPosts() { freshNav({ type: 'all' }); }
@@ -984,20 +940,11 @@
 
   (function instantPaintFromCache() {
     try {
-      // Posts cache-এ এখন সময়ও (savedAt) সেভ থাকে। Cache যদি ২ ঘণ্টার
-      // মধ্যে সেভ করা হয়ে থাকে, তাহলে instant দেখানো হবে (normal ব্যবহারে
-      // এটাই সবসময় হবে, কোনো delay থাকবে না)। কিন্তু cache পুরনো হলে
-      // (যেমন app অনেকক্ষণ বন্ধ ছিল, এর মধ্যে কোনো Post delete হয়ে থাকতে
-      // পারে) instant-paint বাদ দিয়ে সরাসরি fresh ডাটার জন্য অপেক্ষা করা
-      // হবে — যাতে delete হওয়া Post ভুলবশত কিছুক্ষণের জন্যও না দেখায়।
-      const CACHE_MAX_AGE_MS = 2 * 60 * 60 * 1000; // ২ ঘণ্টা
-      const rawPosts = JSON.parse(localStorage.getItem(CACHE_POSTS_KEY) || 'null');
-      if (rawPosts && rawPosts.savedAt && (Date.now() - rawPosts.savedAt) < CACHE_MAX_AGE_MS && Array.isArray(rawPosts.posts)) {
-        allPosts = rawPosts.posts.filter(isVisibleNow);
-      }
+      const cp = JSON.parse(localStorage.getItem(CACHE_POSTS_KEY) || 'null');
       const cpl = JSON.parse(localStorage.getItem(CACHE_PLAYLISTS_KEY) || 'null');
       const chg = JSON.parse(localStorage.getItem(CACHE_HADITH_GROUPS_KEY) || 'null');
       const cqg = JSON.parse(localStorage.getItem(CACHE_QURAN_GROUPS_KEY) || 'null');
+      if (cp) allPosts = cp.filter(isVisibleNow);
       if (cpl) allPlaylists = cpl;
       if (chg) allHadithGroups = chg;
       if (cqg) allQuranGroups = cqg;
@@ -1053,7 +1000,7 @@
     try {
       allPosts = snap.docs.map(mapPostDoc).filter(isVisibleNow)
         .sort((a, b) => (b.rawPublishAt || b.rawTime || 0) - (a.rawPublishAt || a.rawTime || 0));
-      try { localStorage.setItem(CACHE_POSTS_KEY, JSON.stringify({ posts: allPosts, savedAt: Date.now() })); } catch (e) {}
+      try { localStorage.setItem(CACHE_POSTS_KEY, JSON.stringify(allPosts)); } catch (e) {}
       postsSnapshotReceived = true;
       applyFilterState();
     } catch (mapErr) {
@@ -1078,7 +1025,7 @@
         try {
           allPosts = snap.docs.map(mapPostDoc).filter(isVisibleNow)
             .sort((a, b) => (b.rawPublishAt || b.rawTime || 0) - (a.rawPublishAt || a.rawTime || 0));
-          try { localStorage.setItem(CACHE_POSTS_KEY, JSON.stringify({ posts: allPosts, savedAt: Date.now() })); } catch (e) {}
+          try { localStorage.setItem(CACHE_POSTS_KEY, JSON.stringify(allPosts)); } catch (e) {}
           postsSnapshotReceived = true;
           applyFilterState();
         } catch (mapErr) { console.log('fallback posts mapping error:', mapErr); }
