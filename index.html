@@ -386,7 +386,7 @@
   function copyNumber() { navigator.clipboard.writeText('+880XXXXXXXXXX'); }
   document.getElementById('moreModalClose').addEventListener('click', () => document.getElementById('moreModal').classList.remove('open'));
 
-  const CATEGORY_SECTIONS = ['Lives of the Prophets', 'Lives of the Sahabah', 'Dua', 'মাসআলা', 'প্রচলিত ভুল', 'মাসনুন আমল', 'কুরআনের শিক্ষা', 'Nasheed'];
+  const CATEGORY_SECTIONS = ['Lives of the Prophets', 'Lives of the Sahabah', 'Dua', 'Nasheed'];
 
   const SECTION_STYLES = {
     'Quran': { bg:'#f0ecfb', color:'#4a2a8d', emoji:'📖' },
@@ -647,9 +647,7 @@
         bodyHtml = `${titlePrefix}<div class="post-link" style="cursor:default;">${post.customText}</div>`;
       }
       const copyBtnHtml = sectionName === 'Bangla Caption' ? `<button class="action-btn" onclick="copyPostText('${post.id}')">${copyIcon} Copy</button>` : '';
-      const postSubHtml = sectionName === 'Daily Hadith'
-        ? `<div class="post-sub">${timeAgo(post.rawTime)}</div>`
-        : '';
+      const postSubHtml = '';
       const iconSt = getSectionIconStyle(pl);
       card.innerHTML = `
         <div class="post-header">
@@ -816,7 +814,17 @@
   }
 
   function applyFilterState() {
-    if (currentFilter.type === 'all') { setFilterTabs('filterYourFeeds'); renderPosts(allPosts); }
+    if (currentFilter.type === 'all') {
+      setFilterTabs('filterYourFeeds');
+      // Al Hadith-এর Post গুলো Home Feed-এ দেখাবে না (শুধু Al Hadith সেকশনের
+      // ভেতরে Group/Playlist ঘুরে দেখলে দেখাবে) — playlist.hadithGroupId
+      // থাকলেই বোঝা যায় সেটা Al Hadith-এর কোনো Playlist।
+      const homePosts = allPosts.filter(p => {
+        const pl = allPlaylists.find(pl2 => pl2.id === p.playlistId);
+        return !(pl && pl.hadithGroupId);
+      });
+      renderPosts(homePosts);
+    }
     else if (currentFilter.type === 'history') {
       setFilterTabs('filterHistory');
       const ids = JSON.parse(localStorage.getItem('visitHistory') || '[]');
