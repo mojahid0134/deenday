@@ -40,7 +40,7 @@
     nav.id = 'nfBottomNav';
     [
       { key: 'home', label: 'Home' },
-      { key: 'bookmark', label: 'Bookmark' },
+      { key: 'bookmark', label: 'Bookmarks' },
       { key: 'history', label: 'History' }
     ].forEach(item => {
       const btn = document.createElement('button');
