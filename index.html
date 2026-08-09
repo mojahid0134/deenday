@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
 <title>Deen Day</title>
 
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
@@ -19,13 +20,14 @@
 
 <style>
   * { margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', Roboto, sans-serif;
-    -webkit-text-size-adjust:100%; text-size-adjust:100%; }
-  html, body { height:100%; }
+    -webkit-text-size-adjust:100%; text-size-adjust:100%;
+    touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+  html, body { height:100%; overscroll-behavior:none; }
   body { background:#f4f5f7; display:flex; flex-direction:column; }
-  /* Home page (filter=all) থাকা অবস্থায় পুরো body fixed/non-scrollable — সব একটা
-     screen-এ fit হয়ে যায়, কোনো scroll লাগে না। কোনো section-এ ঢুকলে (feed view)
-     আবার normal scroll ফিরে আসে (পোস্ট বেশি হলে স্ক্রল দরকার হয় বলে)। */
-  body.home-fixed { height:100dvh; height:100vh; overflow:hidden; }
+  /* Home page (filter=all) থাকা অবস্থায় html + body দুটোই fixed/non-scrollable —
+     কিছু WebView/browser body-তে overflow:hidden দিলেও html নিজে স্ক্রল করে,
+     তাই দুই জায়গাতেই লক করা হচ্ছে যাতে কোনোভাবেই না নড়ে/refresh না হয়। */
+  html.home-fixed, body.home-fixed { height:100dvh; height:100vh; overflow:hidden; overscroll-behavior:none; }
   body:not(.home-fixed) { min-height:100dvh; min-height:100vh; overflow-y:auto; padding-bottom:92px; }
   svg.icon { width:16px; height:16px; flex-shrink:0; }
 
@@ -39,12 +41,10 @@
      (কনটেন্ট static, ছবি লোড হওয়ার আগে/পরে সমান) পেজ কখনো নড়ে না।
      ছবিটা object-fit:cover দিয়ে এই height-টাকেই ভরে রাখে।
      ========================================================= */
-  .topbar { flex:0 0 auto; position:relative; width:100%;
+  .topbar { flex:0 0 auto; position:relative; width:100%; min-height:44.5vw;
     padding:14px 16px 18px; background:#1a1a2e; }
   .topbar-bg-img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:1; }
-  .topbar-overlay { position:absolute; inset:0; z-index:2;
-    background:linear-gradient(180deg, rgba(8,16,34,0.32) 0%, rgba(8,16,34,0.10) 45%, rgba(8,16,34,0.20) 100%);
-    pointer-events:none; }
+  .topbar-overlay { position:absolute; inset:0; z-index:2; pointer-events:none; }
   .topbar-content { position:relative; z-index:3; display:flex; flex-direction:column; }
 
   .top-toprow { display:flex; justify-content:space-between; align-items:flex-start; }
@@ -72,13 +72,13 @@
   }
 
   /* ===== Greeting block (সাদা রঙে, header-এর একদম উপরের দিকে) ===== */
-  .greeting-block { margin-top:10px; }
-  .greeting-eyebrow { font-size:14.5px; font-weight:700; color:#fff; text-shadow:0 1px 5px rgba(0,0,0,0.4); }
-  .greeting-divider { display:flex; align-items:center; gap:7px; margin:7px 0; }
-  .greeting-divider .line { height:1px; width:36px; background:#fff; opacity:0.75; }
-  .greeting-divider .dot { width:5px; height:5px; border-radius:50%; background:#fff; opacity:0.85; }
-  .greeting-headline { font-size:25px; font-weight:800; color:#fff; line-height:1.2;
-    text-shadow:0 1px 6px rgba(0,0,0,0.45); max-width:70%; }
+  .greeting-block { margin-top:8px; }
+  .greeting-eyebrow { font-size:14px; font-weight:700; color:#16234f; }
+  .greeting-divider { display:flex; align-items:center; gap:7px; margin:6px 0; }
+  .greeting-divider .line { height:1px; width:36px; background:#16234f; opacity:0.55; }
+  .greeting-divider .dot { width:7px; height:7px; background:#16234f; opacity:0.75; transform:rotate(45deg); border-radius:2px; }
+  .greeting-headline { font-size:23px; font-weight:800; color:#16234f; line-height:1.18;
+    max-width:70%; }
 
   /* ===== Modals (Date / Donate) ===== */
   .modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:550;
@@ -117,10 +117,10 @@
   #homeMain { flex:1 1 auto; min-height:0; display:flex; flex-direction:column;
     padding:10px 14px calc(10px + 88px); overflow:hidden; }
 
-  .dq-wrap { flex:0 0 auto; }
+  .dq-wrap { flex:0 0 auto; position:relative; z-index:4; margin-top:-15px; }
   .daily-quran-card {
-    background:#fff; border-radius:16px; padding:12px 14px 11px;
-    box-shadow:0 4px 14px rgba(20,40,80,0.09); cursor:pointer;
+    background:#fff; border-radius:20px; padding:12px 14px 11px;
+    box-shadow:0 8px 18px rgba(20,40,80,0.14); cursor:pointer;
     display:flex; flex-direction:column;
   }
   .dq-header { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
@@ -140,23 +140,30 @@
 
   /* =========================================================
      HOME SECTION GRID — সব section একসাথে, ৪ কলামে, স্ক্রল/মোর
-     ছাড়াই — প্রতিটা row তার নিজের কনটেন্ট অনুযায়ী উচ্চতা নেয়
+     ছাড়াই। minmax(0,1fr) ব্যবহার করার কারণে row/column প্রয়োজনে
+     নিজের content-এর normal সাইজের চেয়েও ছোট হতে পারে (এটাই আসল
+     ফিক্স — আগে "1fr" row content-এর নিচে সংকুচিত না হতে পেরে
+     পাশের row-এর উপর উঠে যাচ্ছিল/নড়ছিল)। আইকন তার নিজের সেলের
+     height-এর %-এ বসানো, তাই জায়গা কম পড়লে ছোট হয়ে যায়, কখনো
+     উপচে পড়ে না। Label এক লাইনে (দরকারে ... দিয়ে কাটা) — height
+     সবসময় fixed/predictable, তাই কখনো নড়ে না।
      ========================================================= */
-  .home-grid-wrap { flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch;
-    display:flex; margin-top:10px; }
-  .home-grid { flex:1; width:100%; align-content:flex-start; display:grid;
-    grid-template-columns:repeat(4, 1fr); grid-auto-rows:min-content; column-gap:6px; row-gap:12px; }
-  .home-grid-item { display:flex; flex-direction:column; align-items:center;
-    gap:5px; cursor:pointer; width:100%; overflow:hidden; }
+  .home-grid-wrap { flex:1 1 auto; min-height:0; overflow:hidden; display:flex; margin-top:10px; }
+  .home-grid { flex:1; width:100%; display:grid;
+    grid-template-columns:repeat(4, minmax(0,1fr)); grid-template-rows:repeat(4, minmax(0,1fr));
+    column-gap:4px; row-gap:4px; }
+  .home-grid-item { display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:4px; cursor:pointer; width:100%; height:100%; min-width:0; min-height:0; overflow:hidden; }
   .home-grid-icon {
-    width:50px; height:50px; border-radius:15px; flex-shrink:0;
+    height:60%; width:auto; aspect-ratio:1/1; max-height:54px; max-width:54px; min-height:24px;
+    border-radius:15px; flex-shrink:1;
     display:flex; align-items:center; justify-content:center;
     box-shadow:0 3px 8px rgba(20,40,80,0.07), inset 0 1px 0 rgba(255,255,255,0.55);
   }
-  .home-grid-icon span { font-size:21px; line-height:1; }
+  .home-grid-icon span { font-size:clamp(12px, 3.2vh, 22px); line-height:1; }
   .home-grid-icon svg { width:52%; height:52%; }
-  .home-grid-label { font-size:10px; font-weight:700; color:#333; text-align:center; line-height:1.22;
-    width:100%; min-height:2.44em; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .home-grid-label { font-size:clamp(7.5px, 1.35vh, 10px); font-weight:700; color:#333; text-align:center;
+    line-height:1.2; width:100%; flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
   /* ===== Feed (only shown when browsing inside a section — normal scroll) ===== */
   .feed { display:none; padding:14px; flex-direction:column; gap:14px; }
@@ -868,11 +875,13 @@
     document.getElementById('homeMain').style.display = 'flex';
     document.getElementById('sectionTitleBox').innerHTML = '';
     document.getElementById('feedContainer').style.display = 'none';
+    document.documentElement.classList.add('home-fixed');
     document.body.classList.add('home-fixed');
   }
   function showFeedView() {
     document.getElementById('homeMain').style.display = 'none';
     document.getElementById('feedContainer').style.display = 'flex';
+    document.documentElement.classList.remove('home-fixed');
     document.body.classList.remove('home-fixed');
   }
 
@@ -1122,6 +1131,9 @@
   const pullIndicator = document.getElementById('pullIndicator');
   const PULL_THRESHOLD = 70;
   window.addEventListener('touchstart', (e) => {
+    // Home page fixed/non-scrollable — pull-to-refresh বন্ধ, তাই touch করলে
+    // পেজ আর নড়ে না এবং নিচের nav বাটনে ট্যাপ সাথে সাথে কাজ করে।
+    if (document.body.classList.contains('home-fixed')) { pulling = false; return; }
     if (window.scrollY === 0) { touchStartY = e.touches[0].clientY; pulling = true; } else { pulling = false; }
   }, { passive: true });
   window.addEventListener('touchmove', (e) => {
