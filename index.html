@@ -2,85 +2,75 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="mobile-web-app-capable" content="yes">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Deen Day</title>
 
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://api.alquran.cloud" crossorigin>
-<link rel="dns-prefetch" href="https://www.gstatic.com">
-<link rel="dns-prefetch" href="https://firestore.googleapis.com">
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="https://www.gstatic.com">
+<link rel="dns-prefetch" href="https://firestore.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;600&display=swap" rel="stylesheet">
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <style>
+  @font-face {
+    font-family: 'Uthman Hafs';
+    src: url('https://cdn.jsdelivr.net/gh/mustafa0x/qpc-fonts@f93bf5f3/various-woff2/UthmanicHafs1%20Ver09.woff2') format('woff2'),
+         url('https://cdn.jsdelivr.net/gh/mustafa0x/qpc-fonts@f93bf5f3/various-woff/UthmanicHafs1%20Ver09.woff') format('woff');
+    font-weight: normal; font-style: normal; font-display: swap;
+  }
   * { margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', Roboto, sans-serif;
-    -webkit-text-size-adjust:100%; text-size-adjust:100%;
-    touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
-  html, body { height:100%; overscroll-behavior:none; }
-  body { background:#f4f5f7; display:flex; flex-direction:column; }
-  /* Home page (filter=all) থাকা অবস্থায় html + body দুটোই fixed/non-scrollable —
-     কিছু WebView/browser body-তে overflow:hidden দিলেও html নিজে স্ক্রল করে,
-     তাই দুই জায়গাতেই লক করা হচ্ছে যাতে কোনোভাবেই না নড়ে/refresh না হয়। */
-  html.home-fixed, body.home-fixed { height:100dvh; height:100vh; overflow:hidden; overscroll-behavior:none; }
-  body:not(.home-fixed) { min-height:100dvh; min-height:100vh; overflow-y:auto; padding-bottom:92px; }
+    -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+  body { background:#f4f5f7; padding-bottom:128px; }
   svg.icon { width:16px; height:16px; flex-shrink:0; }
 
-  /* =========================================================
-     HEADER BANNER
-     ছবি সাইজ (সাজেস্টেড): 1184 x 527 px (banner-bg.jpg, রুট ফোল্ডারে)।
-     এখানে height আর aspect-ratio দিয়ে জোর করে বাঁধা হয়নি — বরং
-     ভেতরের লেখার (Assalamu Alaikum / May Allah bless your day) জন্য
-     যতটুকু জায়গা লাগে ততটুকুই height নেয় (flex:0 0 auto), তাই লেখা
-     কখনো কাটা পড়ে না/ঢাকা পড়ে না, অথচ height নির্ধারিত/স্থির থাকায়
-     (কনটেন্ট static, ছবি লোড হওয়ার আগে/পরে সমান) পেজ কখনো নড়ে না।
-     ছবিটা object-fit:cover দিয়ে এই height-টাকেই ভরে রাখে।
-     ========================================================= */
-  .topbar { flex:0 0 auto; position:relative; width:100%; min-height:44.5vw;
-    padding:14px 16px 18px; background:#1a1a2e; }
+  /* ===== Header — FIXED 1184:527 ratio (তোমার banner-bg.jpg ঠিক এই অনুপাতে বসাও),
+     সবসময় স্থির থাকবে, কোনো অবস্থাতেই বদলাবে/নড়বে না। ===== */
+  .topbar { position:relative; overflow:hidden; width:100%; aspect-ratio:1184/527;
+    padding:8px 14px 8px; background:#eaf4ff; }
   .topbar-bg-img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:1; }
-  .topbar-overlay { position:absolute; inset:0; z-index:2; pointer-events:none; }
-  .topbar-content { position:relative; z-index:3; display:flex; flex-direction:column; }
+  .topbar-overlay { position:absolute; inset:0; z-index:2; pointer-events:none;
+    background: linear-gradient(115deg, rgba(255,255,255,0.94) 0%, rgba(255,255,255,0.86) 32%, rgba(255,255,255,0.32) 56%, rgba(255,255,255,0) 74%); }
+  .topbar-content { position:relative; z-index:3; height:100%; display:flex; flex-direction:column; }
 
-  .top-toprow { display:flex; justify-content:space-between; align-items:flex-start; }
+  .top-toprow { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px; }
+  .top-left-btns { display:flex; gap:8px; }
   .hamburger-wrap { position:relative; }
-  .hamburger-btn { background:rgba(255,255,255,0.18); border:none; color:#fff;
-    width:34px; height:34px; border-radius:10px; font-size:17px; display:flex; align-items:center; justify-content:center; }
-  .topbar-dropdown { display:none; position:absolute; top:40px; left:0;
+  .hamburger-btn { background:rgba(255,255,255,0.75); border:1px solid rgba(16,29,63,0.08); color:#1a1a2e;
+    width:28px; height:28px; border-radius:8px; font-size:14px; display:flex; align-items:center; justify-content:center; }
+  .topbar-dropdown { display:none; position:absolute; top:36px; left:0;
     background:#fff; border-radius:10px; box-shadow:0 4px 16px rgba(0,0,0,0.25);
-    min-width:150px; z-index:60; overflow:hidden; }
+    min-width:150px; z-index:50; overflow:hidden; }
   .topbar-dropdown.open { display:block; }
   .topbar-dropdown div { padding:12px 16px; font-size:14px; color:#1a1a2e; font-weight:700;
     display:flex; align-items:center; gap:8px; }
 
-  .top-right-info { display:flex; flex-direction:column; align-items:flex-end; gap:5px; }
-  .timer { background:rgba(255,255,255,0.22); padding:4px 10px; border-radius:16px;
-    font-size:11px; font-weight:700; display:flex; align-items:center; gap:4px; color:#0f2a4a; }
-  .timer svg { width:12px; height:12px; }
-  .date-pill { background:#eef6ff; padding:5px 10px; border-radius:12px;
-    font-size:11px; font-weight:700; color:#0f2a4a; }
+  .top-right-info { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
+  .timer { background:rgba(255,255,255,0.2); padding:3px 8px; border-radius:14px;
+    font-size:10px; font-weight:700; display:flex; align-items:center; gap:4px; color:#fff; }
+  .timer svg { width:11px; height:11px; }
+  .date-pill { background:rgba(255,255,255,0.12); padding:3px 8px; border-radius:11px;
+    font-size:9px; font-weight:600; color:#fff; }
+
   .digital-clock {
-    background:rgba(255,255,255,0.2); backdrop-filter:blur(4px);
-    border:1px solid rgba(255,255,255,0.35); border-radius:10px;
-    padding:5px 11px; color:#fff; font-size:12.5px; font-weight:700; letter-spacing:0.5px;
+    background:rgba(255,255,255,0.15); backdrop-filter:blur(4px);
+    border:1px solid rgba(255,255,255,0.3); border-radius:9px;
+    padding:3px 8px; color:#fff; font-size:11px; font-weight:700; letter-spacing:0.5px;
     font-variant-numeric:tabular-nums;
   }
 
-  /* ===== Greeting block (সাদা রঙে, header-এর একদম উপরের দিকে) ===== */
-  .greeting-block { margin-top:8px; }
-  .greeting-eyebrow { font-size:14px; font-weight:700; color:#16234f; }
-  .greeting-divider { display:flex; align-items:center; gap:7px; margin:6px 0; }
-  .greeting-divider .line { height:1px; width:36px; background:#16234f; opacity:0.55; }
-  .greeting-divider .dot { width:7px; height:7px; background:#16234f; opacity:0.75; transform:rotate(45deg); border-radius:2px; }
-  .greeting-headline { font-size:23px; font-weight:800; color:#16234f; line-height:1.18;
-    max-width:70%; }
+  .greeting-label { font-size:11.5px; font-weight:700; color:#153a73; letter-spacing:0.2px; line-height:1.1; }
+  .topbar h1 { font-size:16px; font-weight:800; color:#101d3f; line-height:1.16; margin:2px 0; }
+  .divider-ornament { display:flex; align-items:center; gap:5px; margin:2px 0; }
+  .divider-ornament .line { height:1px; width:26px; background:#d9b878; }
+  .divider-ornament .dot { width:4px; height:4px; border-radius:50%; background:#d9b878; }
 
-  /* ===== Modals (Date / Donate) ===== */
+  /* ===== Modals (Date / Donate / More Sections) ===== */
   .modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:550;
     align-items:flex-end; justify-content:center; }
   .modal-backdrop.open { display:flex; }
@@ -97,76 +87,52 @@
   .donate-method .num-row { display:flex; justify-content:space-between; align-items:center; }
   .donate-method .num { font-size:16px; font-weight:700; color:#1a1a2e; }
   .copy-btn { background:#0EA5E9; color:#fff; border:none; padding:6px 12px; border-radius:10px; font-size:12px; font-weight:700; }
+  .full-grid { display:grid; grid-template-columns:repeat(4,1fr); row-gap:16px; column-gap:8px; }
+  .grid-tile { display:flex; flex-direction:column; align-items:center; gap:7px; cursor:pointer; }
+  .grid-tile-icon-box { width:100%; max-width:74px; aspect-ratio:1/1; border-radius:18px;
+    display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(0,0,0,0.07); }
+  .grid-tile-icon { font-size:30px; line-height:1; }
+  .grid-tile-label { font-size:10.5px; font-weight:700; color:#1a1a2e; line-height:1.25;
+    text-align:center; white-space:normal; overflow-wrap:break-word; }
 
   /* ===== Pull to Refresh ===== */
   .pull-indicator { display:flex; align-items:center; justify-content:center; height:0; overflow:hidden;
-    transition:height 0.15s ease; background:#fff; flex:0 0 auto; }
+    transition:height 0.15s ease; background:#fff; }
   .pull-indicator .spinner { width:22px; height:22px; border:3px solid #dbeefe; border-top-color:#0EA5E9;
     border-radius:50%; animation:spin 0.7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* =========================================================
-     HOME MAIN — Daily Quran card + Section grid, header আর bottom
-     nav-এর মাঝের বাকি জায়গাটা flex:1 দিয়ে ভরে রাখে। গ্রিড আইটেমগুলো
-     নিজের কনটেন্ট অনুযায়ী (fixed) height নেয় — কোনো জোর করে চাপানো
-     ১fr/vh-based sizing নেই, তাই কোনো আইকন/লেবেল পাশের row-এর উপর
-     উঠে যাওয়ার (overlap) সুযোগ নেই। খুব ছোট স্ক্রিনে সব না আঁটলে
-     শুধু গ্রিড অংশটুকু নিজে থেকে হালকা scroll করবে (header/card/nav
-     সবসময় স্থির থাকে) — এতে UI কখনো ভাঙে না।
-     ========================================================= */
-  #homeMain { flex:1 1 auto; min-height:0; display:flex; flex-direction:column;
-    padding:10px 14px calc(10px + 88px); overflow:hidden; }
+  /* ===== Home Content (Daily Quran + Full Section Grid) ===== */
+  .section-panel { position:relative; z-index:3; background:#fff; margin-top:0;
+    border-radius:26px 26px 0 0; padding:14px 0 8px; box-shadow:0 -6px 16px rgba(0,0,0,0.05); }
 
-  .dq-wrap { flex:0 0 auto; position:relative; z-index:4; margin-top:-15px; }
-  .daily-quran-card {
-    background:#fff; border-radius:20px; padding:12px 14px 11px;
-    box-shadow:0 8px 18px rgba(20,40,80,0.14); cursor:pointer;
-    display:flex; flex-direction:column;
-  }
-  .dq-header { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
-  .dq-icon { width:28px; height:28px; border-radius:8px; background:#E0F2FE; color:#0369A1;
+  .daily-quran-card { background:#fff; border:1px solid #eef1f5; border-radius:16px;
+    padding:12px 12px 10px; margin:0 14px 12px; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
+  .dq-header { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .dq-icon { width:28px; height:28px; border-radius:9px; background:#E0F2FE; color:#0369A1;
     display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
-  .dq-title { font-size:14px; font-weight:800; color:#1a1a2e; }
-  .dq-arabic { font-family:'Amiri','Noto Naskh Arabic',serif; font-size:16px; line-height:1.75;
-    direction:rtl; text-align:right; color:#12213f; margin-bottom:7px;
+  .dq-label { font-size:14px; font-weight:800; color:#1a1a2e; }
+  /* খুব লম্বা আয়াত পড়লে card যেন অস্বাভাবিক বড় না হয়ে যায়, তাই Arabic/বাংলা/English
+     প্রতিটাই সর্বোচ্চ কয়েক লাইনে capped — বাকিটা "Surah (x:y)" লিংকে ক্লিক করে পুরোটা পড়া যাবে। */
+  .dq-arabic { font-family:'Uthman Hafs','Amiri','Noto Naskh Arabic',serif; font-size:19px;
+    line-height:1.8; direction:rtl; text-align:right; color:#1a1a2e; margin-bottom:7px;
+    display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+  .dq-badge { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px;
+    border-radius:50%; background:#E0F2FE; color:#0369A1; font-size:10px; font-weight:800;
+    margin-left:7px; vertical-align:middle; font-family:'Segoe UI', Roboto, sans-serif; }
+  .dq-bn { font-size:13px; line-height:1.6; color:#0369A1; margin-bottom:6px;
     display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-  .dq-ayah-badge { display:inline-flex; align-items:center; justify-content:center;
-    width:19px; height:19px; border-radius:50%; background:#E0F2FE; color:#0369A1;
-    font-size:10px; font-weight:800; margin-inline-start:6px; vertical-align:middle; direction:ltr; }
-  .dq-translation { font-size:12px; line-height:1.5; color:#3a3a45; margin-bottom:5px;
+  .dq-en { font-size:11.5px; line-height:1.5; color:#666; font-style:italic; margin-bottom:8px;
     display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-  .dq-ref { font-size:11px; font-weight:700; color:#0369A1; }
-  .dq-skeleton { color:#aaa; font-size:13px; -webkit-line-clamp:1; }
+  .dq-ref { font-size:12px; font-weight:700; color:#0EA5E9; text-decoration:none; }
+  .dq-skeleton { color:#999; font-size:13px; text-align:center; padding:44px 0; }
+  #dqBody { min-height:130px; display:flex; flex-direction:column; justify-content:center; }
+  #dqBody.loaded { display:block; }
 
-  /* =========================================================
-     HOME SECTION GRID — সব section একসাথে, ৪ কলামে, স্ক্রল/মোর
-     ছাড়াই। minmax(0,1fr) ব্যবহার করার কারণে row/column প্রয়োজনে
-     নিজের content-এর normal সাইজের চেয়েও ছোট হতে পারে (এটাই আসল
-     ফিক্স — আগে "1fr" row content-এর নিচে সংকুচিত না হতে পেরে
-     পাশের row-এর উপর উঠে যাচ্ছিল/নড়ছিল)। আইকন তার নিজের সেলের
-     height-এর %-এ বসানো, তাই জায়গা কম পড়লে ছোট হয়ে যায়, কখনো
-     উপচে পড়ে না। Label এক লাইনে (দরকারে ... দিয়ে কাটা) — height
-     সবসময় fixed/predictable, তাই কখনো নড়ে না।
-     ========================================================= */
-  .home-grid-wrap { flex:1 1 auto; min-height:0; overflow:hidden; display:flex; margin-top:10px; }
-  .home-grid { flex:1; width:100%; display:grid;
-    grid-template-columns:repeat(4, minmax(0,1fr)); grid-template-rows:repeat(4, minmax(0,1fr));
-    column-gap:4px; row-gap:4px; }
-  .home-grid-item { display:flex; flex-direction:column; align-items:center; justify-content:center;
-    gap:4px; cursor:pointer; width:100%; height:100%; min-width:0; min-height:0; overflow:hidden; }
-  .home-grid-icon {
-    height:60%; width:auto; aspect-ratio:1/1; max-height:54px; max-width:54px; min-height:24px;
-    border-radius:15px; flex-shrink:1;
-    display:flex; align-items:center; justify-content:center;
-    box-shadow:0 3px 8px rgba(20,40,80,0.07), inset 0 1px 0 rgba(255,255,255,0.55);
-  }
-  .home-grid-icon span { font-size:clamp(12px, 3.2vh, 22px); line-height:1; }
-  .home-grid-icon svg { width:52%; height:52%; }
-  .home-grid-label { font-size:clamp(7.5px, 1.35vh, 10px); font-weight:700; color:#333; text-align:center;
-    line-height:1.2; width:100%; flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .home-grid-wrap { padding:0 14px 2px; }
 
-  /* ===== Feed (only shown when browsing inside a section — normal scroll) ===== */
-  .feed { display:none; padding:14px; flex-direction:column; gap:14px; }
+  /* ===== Feed ===== */
+  .feed { padding:14px; display:flex; flex-direction:column; gap:14px; }
   .post-card { background:#fff; border-radius:16px; padding:16px; box-shadow:0 2px 10px rgba(0,0,0,0.06); }
   .post-header { display:flex; align-items:flex-start; gap:10px; }
   .post-avatar { width:32px; height:32px; border-radius:50%; flex-shrink:0;
@@ -247,7 +213,7 @@
 
   <div class="topbar">
     <!-- ================================
-    Image Background: এখানে তোর Upload করা banner-bg.jpg ফাইলটা লোড হবে (Size: 1184x527)
+    Image Background: এখানে তোর Upload করা banner-bg.jpg ফাইলটা লোড হবে (Size: 1280x563)
     ফাইলের নাম ঠিক এভাবেই Repository এর মূল ফোল্ডারে বসাবি।
     ================================ -->
     <img class="topbar-bg-img" src="banner-bg.jpg" alt="">
@@ -255,20 +221,22 @@
 
     <div class="topbar-content">
       <div class="top-toprow">
-        <div class="hamburger-wrap">
-          <button class="hamburger-btn" id="topDotsBtn">☰</button>
-          <div class="topbar-dropdown" id="topDropdown">
-            <div id="menuDonateTop">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.8 1-1.1a5.5 5.5 0 0 0 0-7.5z"/></svg>
-              Donate
-            </div>
-            <div id="menuRateTop">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-              Rate Our App
-            </div>
-            <div id="menuShareTop">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-              Share App
+        <div class="top-left-btns">
+          <div class="hamburger-wrap">
+            <button class="hamburger-btn" id="topDotsBtn">☰</button>
+            <div class="topbar-dropdown" id="topDropdown">
+              <div id="menuDonateTop">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.8 1-1.1a5.5 5.5 0 0 0 0-7.5z"/></svg>
+                Donate
+              </div>
+              <div id="menuRateTop">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                Rate Our App
+              </div>
+              <div id="menuShareTop">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                Share App
+              </div>
             </div>
           </div>
         </div>
@@ -282,11 +250,10 @@
         </div>
       </div>
 
-      <div class="greeting-block">
-        <div class="greeting-eyebrow">Assalamu Alaikum</div>
-        <div class="greeting-divider"><div class="line"></div><div class="dot"></div><div class="line"></div></div>
-        <div class="greeting-headline">May Allah bless<br>your day</div>
-      </div>
+      <div class="greeting-label" id="greetingLabel">Assalamu Alaikum</div>
+      <div class="divider-ornament"><div class="line"></div><div class="dot"></div><div class="line"></div></div>
+      <h1 id="appTitle">May Allah bless<br>your day</h1>
+      <div class="divider-ornament"><div class="line"></div><div class="dot"></div><div class="line"></div></div>
     </div>
   </div>
 
@@ -321,19 +288,16 @@
 
   <div class="pull-indicator" id="pullIndicator"><div class="spinner"></div></div>
 
-  <!-- ===== Home-only content: Daily Quran card + full section grid (কোনো Post নেই) ===== -->
-  <div id="homeMain">
-    <div class="dq-wrap">
-      <div class="daily-quran-card" id="dailyQuranCard">
-        <div class="dq-header"><div class="dq-icon">📖</div><div class="dq-title">Daily Quran</div></div>
-        <div class="dq-arabic dq-skeleton" id="dqArabic">লোড হচ্ছে...</div>
-        <div class="dq-translation" id="dqTranslation"></div>
-        <div class="dq-ref" id="dqRef"></div>
+  <div class="section-panel" id="homeContent">
+    <div class="daily-quran-card" id="dailyQuranCard">
+      <div class="dq-header">
+        <div class="dq-icon">📖</div>
+        <div class="dq-label">Daily Quran</div>
       </div>
+      <div id="dqBody"><div class="dq-skeleton">লোড হচ্ছে...</div></div>
     </div>
-
-    <div class="home-grid-wrap" id="homeGridWrap">
-      <div class="home-grid" id="homeGrid"></div>
+    <div class="home-grid-wrap">
+      <div class="full-grid" id="fullSectionGrid"></div>
     </div>
   </div>
 
@@ -428,15 +392,18 @@
   }
   function updateDateDisplays() {
     const now = new Date();
+    // English: day - month - year (English digits & month name)
     const englishStr = now.toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
     document.getElementById('dateEnglish').innerText = englishStr;
+    // Hijri (আরবি বছর): সঠিক Umm al-Qura হিসাব + adjustment থেকে day-month-year বের করে বাংলা সংখ্যা ও বাংলা হরফের মাসের নামে দেখানো হচ্ছে
     document.getElementById('dateArabic').innerText = getHijriBanglaDate(now);
+    // বাংলা: তারিখ - মাস - বছর (বাংলা অংক ও মাসের নাম)
     document.getElementById('dateBangla').innerText = getBanglaDate(now);
   }
   updateDateDisplays();
   setInterval(updateDateDisplays, 60000);
 
-  // ---- Real-time Digital Clock ----
+  // ---- Real-time Digital Clock (Hours : Minutes : Seconds + AM/PM, ফোনের নিজের সময় ব্যবহার করে) ----
   function updateDigitalClock() {
     const now = new Date();
     let h24 = now.getHours();
@@ -454,31 +421,28 @@
   document.getElementById('donateModalClose').addEventListener('click', () => document.getElementById('donateModal').classList.remove('open'));
   function copyNumber() { navigator.clipboard.writeText('+880XXXXXXXXXX'); }
 
-  const APP_MODE = new URLSearchParams(window.location.search).get('app') === '1';
-
   const CATEGORY_SECTIONS = ['Lives of the Prophets', 'Lives of the Sahabah', 'Dua', 'Nasheed'];
 
+  // এই bg/color মানগুলো তোমার পাঠানো reference image থেকে সরাসরি pixel-sample করে বসানো হয়েছে,
+  // তাই প্রতিটা Section-এর card রঙ ছবির সাথে যতটা সম্ভব নিখুঁতভাবে মিলবে।
   const SECTION_STYLES = {
-    'Quran': { bg:'#f0ecfb', color:'#4a2a8d', emoji:'📖' },
-    'Daily Hadith': { bg:'#e9f5e8', color:'#2e7d32', emoji:'📜' },
-    'Al Hadith': { bg:'#fdf3e7', color:'#a8630a', emoji:'📚' },
-    'বিষয়ভিত্তিক কুরআন': { bg:'#e0f7fa', color:'#00838f', emoji:'🎯' },
-    'Lives of the Prophets': { bg:'#eeeafc', color:'#4a2a8d', emoji:'🕌' },
-    'Lives of the Sahabah': { bg:'#fdf1e0', color:'#c9820a', emoji:'👥' },
-    'Dua': { bg:'#e8f0fb', color:'#1e56b3', emoji:'🤲' },
-    '99 Names': { bg:'#e3f6f2', color:'#0e8f7a', text:'الله' },
-    'Tasbih': { bg:'#fdecec', color:'#b23a2e', emoji:'📿' },
-    'মাসআলা': { bg:'#e3f2f8', color:'#0e6e8f', emoji:'📘' },
-    'প্রচলিত ভুল': { bg:'#fdeaea', color:'#c0392b', emoji:'⚠️' },
-    'মাসনুন আমল': { bg:'#eafaf0', color:'#1e8a5f', emoji:'📝' },
-    'কুরআনের শিক্ষা': { bg:'#fbf3e2', color:'#a8790a', emoji:'🎓' },
-    'Bangla Caption': { bg:'#fbeaf1', color:'#c22a72', emoji:'✍️' },
+    'Quran': { bg:'#eef5fe', color:'#1e56b3', emoji:'📖' },
+    'Daily Hadith': { bg:'#fff8ec', color:'#a8630a', emoji:'📜' },
+    'Al Hadith': { bg:'#eaf9f6', color:'#2e7d32', emoji:'📚' },
+    'বিষয়ভিত্তিক কুরআন': { bg:'#edf9f9', color:'#00838f', emoji:'🎯' },
+    'Lives of the Prophets': { bg:'#f3f3fe', color:'#4a2a8d', emoji:'🕌' },
+    'Lives of the Sahabah': { bg:'#fef7eb', color:'#c9820a', emoji:'👥' },
+    'Dua': { bg:'#eef7fd', color:'#1e56b3', emoji:'🤲' },
+    '99 Names': { bg:'#effaf9', color:'#0a5c47', text:'الله' },
+    'Tasbih': { bg:'#fef4f1', color:'#c0392b', emoji:'📿' },
+    'মাসআলা': { bg:'#f0f7fe', color:'#0e6e8f', emoji:'📘' },
+    'প্রচলিত ভুল': { bg:'#fcedee', color:'#c0392b', emoji:'⚠️' },
+    'মাসনুন আমল': { bg:'#f1f9f6', color:'#1e8a5f', emoji:'📝' },
+    'কুরআনের শিক্ষা': { bg:'#fdf6ea', color:'#a8790a', emoji:'🎓' },
+    'Bangla Caption': { bg:'#fbf0f9', color:'#c22a72', emoji:'✍️' },
     'Nasheed': { bg:'#eaf4e6', color:'#4d8a2e', emoji:'🎵' }
   };
-
-  // ছবির layout অনুযায়ী home page-এর crm — সব section একসাথে,
-  // কোনো "More" বাটন/মডাল ছাড়াই সরাসরি ৪ কলামে দেখানো হচ্ছে।
-  const HOME_ORDER = ['Quran','Al Hadith','Daily Hadith','Lives of the Prophets','Lives of the Sahabah','Dua','99 Names','Tasbih','বিষয়ভিত্তিক কুরআন','মাসআলা','প্রচলিত ভুল','মাসনুন আমল','কুরআনের শিক্ষা','Bangla Caption','Nasheed'];
+  const SECTION_ORDER = ['Quran','Daily Hadith','Al Hadith','বিষয়ভিত্তিক কুরআন','Lives of the Prophets','Lives of the Sahabah','Dua','99 Names','Tasbih','মাসআলা','প্রচলিত ভুল','মাসনুন আমল','কুরআনের শিক্ষা','Bangla Caption','Nasheed'];
 
   function buildIconHtml(st) {
     if (st.emoji) return `<span style="font-size:24px; line-height:1;">${st.emoji}</span>`;
@@ -495,60 +459,79 @@
     navSection(name);
   }
 
-  const homeGrid = document.getElementById('homeGrid');
-  HOME_ORDER.forEach(name => {
-    const st = SECTION_STYLES[name];
-    const item = document.createElement('div');
-    item.className = 'home-grid-item';
-    item.innerHTML = `<div class="home-grid-icon" style="background:${st.bg}; color:${st.color};">${buildIconHtml(st)}</div><div class="home-grid-label">${name}</div>`;
-    item.addEventListener('click', () => handleSectionClick(name));
-    homeGrid.appendChild(item);
-  });
-
-  /* ================= Daily Quran card =================
-     - অর্থ এখন বাংলায় (আগে English ছিল)।
-     - এই আয়াতটা sessionStorage-এ রাখা হয় (localStorage না) — তাই
-       App-এর ভেতরে page change/navigate করলে আয়াত একই থাকে, কিন্তু
-       App পুরোপুরি বন্ধ করে (recent থেকে সরিয়ে/kill করে) আবার খুললে
-       নতুন session শুরু হয় আর sessionStorage খালি হয়ে যায় — ফলে
-       প্রতিবার App fresh ওপেন করলেই নতুন একটা random আয়াত দেখাবে। */
-  const TOTAL_AYAHS = 6236;
-  const SESSION_AYAH_KEY = 'sessionDailyAyah_v2';
-
-  function renderDailyAyah(p) {
-    document.getElementById('dqArabic').classList.remove('dq-skeleton');
-    document.getElementById('dqArabic').innerHTML = p.arabic + '<span class="dq-ayah-badge">' + p.numberInSurah + '</span>';
-    document.getElementById('dqTranslation').innerText = '"' + p.translation + '"';
-    document.getElementById('dqRef').innerText = 'Surah ' + p.surahName + ' (' + p.surahNumber + ':' + p.numberInSurah + ')';
-    document.getElementById('dailyQuranCard').onclick = () => {
-      window.location.href = 'quran.html?surah=' + p.surahNumber + (APP_MODE ? '&app=1' : '');
-    };
+  // তোমার পাঠানো reference ছবির মতোই: শুধু icon-টা রঙিন box-এর ভেতরে, আর label
+  // আলাদাভাবে নিচে সাদা background-এ (পুরো লেখা wrap হবে, কোনো "..." দিয়ে কাটবে না)।
+  function buildGridTileIconHtml(st) {
+    if (st.text) return `<span style="font-family:'Traditional Arabic','Noto Naskh Arabic',serif; font-size:26px; font-weight:700; line-height:1; color:${st.color};">${st.text}</span>`;
+    if (st.emoji) return `<span style="font-size:30px; line-height:1;">${st.emoji}</span>`;
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="${st.color}" stroke-width="2" style="width:28px;height:28px;">${st.svg}</svg>`;
   }
+  function buildFullSectionGrid() {
+    const grid = document.getElementById('fullSectionGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    SECTION_ORDER.forEach(name => {
+      const st = SECTION_STYLES[name];
+      const item = document.createElement('div');
+      item.className = 'grid-tile';
+      item.innerHTML = `<div class="grid-tile-icon-box" style="background:${st.bg};">${buildGridTileIconHtml(st)}</div><div class="grid-tile-label">${name}</div>`;
+      item.addEventListener('click', () => handleSectionClick(name));
+      grid.appendChild(item);
+    });
+  }
+  buildFullSectionGrid();
 
+  /* ================= Daily Quran Card — প্রতিদিন Auto বদলানো Ayah (Admin কাজ লাগে না) =================
+     Global ayah number (১-৬২৩৬, পুরো Quran-এর মোট আয়াত) তারিখ থেকে নির্ধারিত হয় (deterministic),
+     তাই একই দিনে সবার জন্য একই আয়াত দেখাবে, আর পরদিন নিজে থেকেই বদলে যাবে। */
+  const QURAN_API_BASE = 'https://api.alquran.cloud/v1';
+  const DAILY_AYAH_CACHE_KEY = 'daily_ayah_cache_v1';
+  const TOTAL_AYAH_COUNT = 6236;
+
+  function todayDateKey() {
+    const now = new Date();
+    return now.getFullYear() + '-' + (now.getMonth() + 1) + '-' + now.getDate();
+  }
+  function getDailyAyahGlobalNumber() {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), 0, 1);
+    const dayOfYear = Math.floor((now - start) / 86400000) + 1;
+    const seed = now.getFullYear() * 1000 + dayOfYear;
+    return (seed % TOTAL_AYAH_COUNT) + 1;
+  }
+  function renderDailyAyah(editions) {
+    const box = document.getElementById('dqBody');
+    if (!box || !editions) return;
+    const ar = editions.find(e => e.edition.identifier === 'quran-uthmani');
+    const bn = editions.find(e => e.edition.identifier === 'bn.bengali');
+    const en = editions.find(e => e.edition.identifier === 'en.sahih');
+    if (!ar) { box.className = ''; box.innerHTML = '<div class="dq-skeleton">লোড করা যায়নি।</div>'; return; }
+    const isApp = new URLSearchParams(window.location.search).get('app') === '1';
+    box.className = 'loaded';
+    box.innerHTML = `
+      <div class="dq-arabic">${ar.text}<span class="dq-badge">${ar.numberInSurah}</span></div>
+      ${bn ? `<div class="dq-bn">${bn.text}</div>` : ''}
+      ${en ? `<div class="dq-en">${en.text}</div>` : ''}
+      <a class="dq-ref" href="quran.html?surah=${ar.surah.number}${isApp ? '&app=1' : ''}">Surah ${ar.surah.englishName} (${ar.surah.number}:${ar.numberInSurah})</a>
+    `;
+  }
   function loadDailyAyah() {
-    const cached = sessionStorage.getItem(SESSION_AYAH_KEY);
-    if (cached) {
-      try { renderDailyAyah(JSON.parse(cached)); return; } catch (e) {}
-    }
-    const ayahNum = Math.floor(Math.random() * TOTAL_AYAHS) + 1;
-    fetch('https://api.alquran.cloud/v1/ayah/' + ayahNum + '/editions/quran-uthmani,bn.bengali')
+    const key = todayDateKey();
+    try {
+      const cached = JSON.parse(localStorage.getItem(DAILY_AYAH_CACHE_KEY) || 'null');
+      if (cached && cached.dateKey === key && cached.data) { renderDailyAyah(cached.data); return; }
+    } catch (e) {}
+    const n = getDailyAyahGlobalNumber();
+    fetch(QURAN_API_BASE + '/ayah/' + n + '/editions/quran-uthmani,bn.bengali,en.sahih')
       .then(r => r.json())
       .then(json => {
-        if (!json.data || json.data.length < 2) throw new Error('bad response');
-        const arEd = json.data[0], bnEd = json.data[1];
-        const payload = {
-          arabic: arEd.text, translation: bnEd.text,
-          numberInSurah: arEd.numberInSurah,
-          surahName: arEd.surah.englishName, surahNumber: arEd.surah.number
-        };
-        try { sessionStorage.setItem(SESSION_AYAH_KEY, JSON.stringify(payload)); } catch (e) {}
-        renderDailyAyah(payload);
+        if (!json.data) throw new Error('bad response');
+        try { localStorage.setItem(DAILY_AYAH_CACHE_KEY, JSON.stringify({ dateKey: key, data: json.data })); } catch (e) {}
+        renderDailyAyah(json.data);
       })
       .catch(() => {
-        document.getElementById('dqArabic').classList.remove('dq-skeleton');
-        document.getElementById('dqArabic').innerText = '';
-        document.getElementById('dqTranslation').innerText = 'আয়াত লোড করা যায়নি। ইন্টারনেট সংযোগ চেক করুন।';
-        document.getElementById('dqRef').innerText = '';
+        const box = document.getElementById('dqBody');
+        if (box) box.innerHTML = '<div class="dq-skeleton">লোড করা যায়নি। ইন্টারনেট সংযোগ চেক করুন।</div>';
       });
   }
   loadDailyAyah();
@@ -565,12 +548,31 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
+  // ================================
+  // WEBVIEW CONNECTION FIX (গুরুত্বপূর্ণ):
+  // আগে এখানে experimentalForceLongPolling সবসময় জোর করে চালু রাখা ছিল,
+  // যেটা Sketchware WebView-এর জন্য ভালো কিন্তু normal browser/Chrome-এ
+  // (এবং modern WebView-তেও) উল্টো ধীর করে দেয় — এটাই Post দেখা দিতে দেরি
+  // হওয়ার মূল কারণ ছিল। এখন experimentalAutoDetectLongPolling ব্যবহার করা
+  // হচ্ছে — এটা প্রতিটা environment (browser বা WebView) নিজে থেকে বুঝে
+  // সবচেয়ে দ্রুত সংযোগ পদ্ধতি বেছে নেয়, তাই দুই জায়গাতেই দ্রুত load হবে।
+  // ================================
   try {
     db.settings({ experimentalAutoDetectLongPolling: true, merge: true });
   } catch (e) {
     console.log('db.settings() error:', e);
   }
 
+  // ================================
+  // OFFLINE PERSISTENCE চালু করা (গুরুত্বপূর্ণ ফিক্স):
+  // আগে এটা ইচ্ছাকৃতভাবে বাদ দেওয়া হয়েছিল multi-tab browser lock-এর ভয়ে।
+  // কিন্তু Sketchware WebView app-এ একটাই instance/tab চলে (multiple tab
+  // এর ঝামেলা নেই), তাই এখন নিরাপদে চালু করা হচ্ছে। এটা IndexedDB-তে
+  // posts/playlists/groups স্থায়ীভাবে সেভ রাখে — তাই app বন্ধ করে আবার
+  // খোলা, বা কোনো Post থেকে Home-এ ফেরা — এসব ক্ষেত্রে network লাগার আগেই
+  // সাথে সাথে আগের ডাটা দেখাবে, তারপর ব্যাকগ্রাউন্ডে নতুন ডাটা sync হবে।
+  // নিচের localStorage instant-paint cache-টাও রাখা হলো অতিরিক্ত fallback হিসেবে।
+  // ================================
   try {
     db.enablePersistence({ synchronizeTabs: true }).catch(err => {
       console.log('Firestore persistence error:', err.code);
@@ -579,13 +581,18 @@
     console.log('enablePersistence() error:', e);
   }
 
-  let postsSnapshotReceived = false;
+  let postsSnapshotReceived = false; // Firestore থেকে অন্তত একবার real response এসেছে কিনা — এটা false থাকলে "No posts yet" না দেখিয়ে "Loading posts..." দেখাবে
   let allPosts = [];
   let allPlaylists = [];
   let allHadithGroups = [];
   let allQuranGroups = [];
   let currentFilter = { type: 'all' };
+  const APP_MODE = new URLSearchParams(window.location.search).get('app') === '1';
 
+  // ===== YouTube link কিনা check করা হচ্ছে =====
+  // YouTube ছাড়া অন্য site (Facebook/article/blog) iframe-এর ভেতরে load হতে
+  // block করে দেয়, তাই view.html-এ গিয়ে redirect হওয়ার আগের extra hop
+  // এড়াতে non-YouTube link গুলো এখান থেকেই সরাসরি, এক ধাপে খোলা হবে।
   function isYouTubeLink(originalUrl) {
     try {
       const u = new URL(originalUrl);
@@ -594,6 +601,8 @@
     } catch (e) { return false; }
   }
 
+  // view.html-এর addToHistory() এর সাথে মিলিয়ে রাখা — সরাসরি link এ ক্লিক
+  // করলেও visit history ঠিকভাবে save হবে।
   function recordVisit(id) {
     let history = JSON.parse(localStorage.getItem('visitHistory') || '[]');
     history = history.filter(h => h !== id);
@@ -652,12 +661,20 @@
   const bookmarkIcon = `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>`;
   const sendIcon = `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`;
   const copyIcon = `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+  const downloadIcon = `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
   const folderIcon = `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`;
 
   function copyPostText(id) {
     const post = allPosts.find(p => p.id === id);
     if (!post) return;
     navigator.clipboard.writeText(post.customTextPlain || post.customText);
+  }
+
+  function downloadImage(id) {
+    const post = allPosts.find(p => p.id === id);
+    if (!post || !post.link) return;
+    if (APP_MODE && window.Kodular) window.Kodular.setWebViewString('DOWNLOAD_IMAGE:' + post.link);
+    else window.open(post.link, '_blank');
   }
 
   function getSectionIconStyle(pl) {
@@ -686,6 +703,9 @@
       card.className = 'post-card';
       let bodyHtml;
       if (sectionName === 'Daily Hadith') {
+        // Daily Hadith: Link থাকলে সেটাই খুলবে (অন্য section-এর মতো)।
+        // Link না থাকলে, Title থাকলে ক্লিক করলে পুরো text view.html-এ খুলবে।
+        // দুটোই না থাকলে সরাসরি Post Text দেখাবে।
         if (hasLink) {
           const displayText = post.title || post.customText;
           if (APP_MODE && !isYouTubeLink(post.link)) {
@@ -699,8 +719,12 @@
           bodyHtml = `<div class="post-link" style="cursor:default;">${post.customText}</div>`;
         }
       } else if (hasLink) {
+        // post.title আর post.customText সবসময় একই টেক্সট (Al Hadith/Prophets/Sahabah/
+        // Quran Topic/Dua পোস্টগুলোতে) — তাই দুইবার না দেখিয়ে শুধু একবারই দেখানো হচ্ছে।
         const displayText = post.title || post.customText;
         if (APP_MODE && !isYouTubeLink(post.link)) {
+          // App এর ভেতরে থাকলে আর YouTube না হলে সরাসরি link এ যাবে —
+          // view.html হয়ে ঘুরে আসার extra hop লাগবে না, তাই একদম instant।
           bodyHtml = `<a class="post-link" style="font-weight:800;" href="${post.link}" onclick="recordVisit('${post.id}')">${displayText}</a>`;
         } else {
           bodyHtml = `<a class="post-link" style="font-weight:800;" href="view.html?id=${post.id}&url=${encodeURIComponent(post.link)}${APP_MODE ? '&app=1' : ''}">${displayText}</a>`;
@@ -710,12 +734,14 @@
         bodyHtml = `${titlePrefix}<div class="post-link" style="cursor:default;">${post.customText}</div>`;
       }
       const copyBtnHtml = sectionName === 'Bangla Caption' ? `<button class="action-btn" onclick="copyPostText('${post.id}')">${copyIcon} Copy</button>` : '';
+      const postSubHtml = '';
       const iconSt = getSectionIconStyle(pl);
       card.innerHTML = `
         <div class="post-header">
           <div class="post-avatar" style="background:${iconSt.bg}; color:${iconSt.color};">${buildIconHtml(iconSt)}</div>
           <div class="post-meta">
             <div class="post-section-name">${sectionName}</div>
+            ${postSubHtml}
           </div>
         </div>
         ${bodyHtml}
@@ -750,6 +776,8 @@
     if (allHadithGroups.length === 0) { feed.innerHTML = '<div class="empty-msg">এখনো কোনো Al Hadith Group যোগ করা হয়নি</div>'; return; }
     feed.innerHTML = '';
     allHadithGroups.forEach(group => {
+      // group.count field সবসময় 0 থাকে, তাই এই Group-এর সব Playlist মিলিয়ে
+      // মোট কতগুলো Post আছে তার প্রকৃত সংখ্যা এখানে হিসাব করা হচ্ছে।
       const groupPlaylistIds = allPlaylists.filter(p => p.hadithGroupId === group.id).map(p => p.id);
       const postCount = allPosts.filter(p => groupPlaylistIds.includes(p.playlistId)).length;
       const card = document.createElement('div');
@@ -839,10 +867,9 @@
 
   function setFilterTabs(activeKey) {
     document.querySelectorAll('.nf-nav-item').forEach(f => f.classList.remove('active', 'rewards-active'));
-    const map = { filterYourFeeds: 'home', filterFavourite: 'bookmark', filterHistory: 'history' };
-    const navKey = activeKey ? map[activeKey] : null;
-    if (navKey) {
-      const el = document.querySelector('.nf-nav-item[data-nav-key="' + navKey + '"]');
+    const map = { filterYourFeeds: 0, filterFavourite: 1, filterHistory: 2 };
+    if (activeKey && activeKey in map) {
+      const el = document.querySelectorAll('.nf-nav-item')[map[activeKey]];
       if (el) el.classList.add('active');
     }
   }
@@ -853,7 +880,7 @@
     else if (key === 'history') showHistory();
   };
 
-  let currentPostSortOrder = 'oldest';
+  let currentPostSortOrder = 'oldest'; // 'oldest' or 'latest'
   function sortByOrder(posts) {
     const sorted = posts.slice();
     if (currentPostSortOrder === 'latest') sorted.sort((a, b) => (b.rawTime || 0) - (a.rawTime || 0));
@@ -867,31 +894,31 @@
   }
 
   function sortedPlaylistPosts(playlistId) {
+    // ডিফল্টে পুরনো → নতুন ক্রমে দেখায় (Hadith/Quran Topic-এর মতো sequential
+    // content ঠিক ক্রমে থাকার জন্য), ব্যবহারকারী "নতুন" বাটনে চাপলে সবচেয়ে
+    // সাম্প্রতিক Post আগে দেখাবে (sortByOrder ব্যবহার করে)।
     return sortByOrder(allPosts.filter(p => p.playlistId === playlistId));
   }
 
-  /* ===== Home view (Daily Quran card + Section grid, fixed/no-scroll) <-> Feed view (scrollable) টগল ===== */
-  function showHomeView() {
-    document.getElementById('homeMain').style.display = 'flex';
-    document.getElementById('sectionTitleBox').innerHTML = '';
-    document.getElementById('feedContainer').style.display = 'none';
-    document.documentElement.classList.add('home-fixed');
-    document.body.classList.add('home-fixed');
-  }
-  function showFeedView() {
-    document.getElementById('homeMain').style.display = 'none';
-    document.getElementById('feedContainer').style.display = 'flex';
-    document.documentElement.classList.remove('home-fixed');
-    document.body.classList.remove('home-fixed');
+  // Home-এ এখন Post Feed না দেখিয়ে Daily Quran card + Full Section Grid দেখানো হয়।
+  // অন্য যেকোনো Filter (Bookmark/History/Playlist/Section browse ইত্যাদি) এ ঢুকলে
+  // Home Content লুকিয়ে আগের মতোই Feed/Section title দেখানো হবে।
+  function showHomeContent(show) {
+    const home = document.getElementById('homeContent');
+    const feed = document.getElementById('feedContainer');
+    const titleBox = document.getElementById('sectionTitleBox');
+    if (home) home.style.display = show ? 'block' : 'none';
+    if (feed) feed.style.display = show ? 'none' : 'flex';
+    if (titleBox) titleBox.style.display = show ? 'none' : 'block';
   }
 
   function applyFilterState() {
     if (currentFilter.type === 'all') {
       setFilterTabs('filterYourFeeds');
-      showHomeView();
+      showHomeContent(true);
       return;
     }
-    showFeedView();
+    showHomeContent(false);
     if (currentFilter.type === 'history') {
       setFilterTabs('filterHistory');
       const ids = JSON.parse(localStorage.getItem('visitHistory') || '[]');
@@ -902,6 +929,10 @@
       renderPosts(ids.map(id => allPosts.find(p => p.id === id)).filter(p => p));
     } else if (currentFilter.type === 'playlist') {
       setFilterTabs(null);
+      // একই নামের একাধিক Playlist ডকুমেন্ট (ভুলবশত ডুপ্লিকেট) থাকলেও যেন
+      // কোনো Post বাদ না পড়ে (Daily Hadith-এ এই কারণেই নতুন Post দেখা
+      // যাচ্ছিল না), তাই প্রথম matching playlist না খুঁজে এই নামের সব
+      // Playlist-এর Post একসাথে মিলিয়ে দেখানো হচ্ছে।
       const matchingIds = allPlaylists.filter(p => p.name === currentFilter.name).map(p => p.id);
       const posts = sortByOrder(allPosts.filter(p => matchingIds.includes(p.playlistId)));
       renderPosts(posts, backTitleHtml(currentFilter.name));
@@ -927,6 +958,15 @@
     }
   }
 
+  // ===== Back Navigation System =====
+  // history.pushState ব্যবহার করা হয়েছে, তাই App-এর ← Back বাটন এবং
+  // Phone-এর নিজের (physical/system) Back বাটন — দুটোই একইভাবে কাজ করবে।
+  //
+  // সমস্যা যেটা ঠিক করা হলো: আগে এক Section ঘুরে অন্য Section-এ গেলে
+  // পুরনো Section-এর history রয়েই যেত, ফলে Back চাপতে চাপতে সেই পুরনো
+  // Section-এ চলে যেত। এখন Home/Favourite/History বা নতুন কোনো Section-এ
+  // ঢোকার সময় (freshNav) আগের পুরো history rewind করে reset করে দেওয়া
+  // হয়, তাই Back চাপলে সবসময় সরাসরি Home-এ গিয়ে থামবে।
   let filterStack = [];
   let historyDepth = 0;
   let suppressPopstate = false;
@@ -967,6 +1007,7 @@
     }
   }
 
+  // Home / Favourite / History বাটনে অথবা নতুন কোনো Section-এ ঢোকার সময় এটা ব্যবহার হবে।
   function freshNav(newFilter) {
     const rewind = historyDepth;
     filterStack = [];
@@ -1016,6 +1057,21 @@
     if (!post.rawPublishAt) return true;
     return post.rawPublishAt <= Date.now();
   }
+
+  /* ================= REAL-TIME LIVE SYNC =================
+     আগে প্রতিবার Manual fetch (get()) করে localStorage cache-এ রাখা হতো,
+     যার ফলে নতুন/মোছা Post দেখা দিতেও দেরি হতো। এখন onSnapshot() ব্যবহার
+     করা হচ্ছে — Firestore-এ কিছু বদলালেই (add/edit/delete) সাথে সাথে
+     App-এও বদলে যাবে, কোনো Manual Refresh ছাড়াই।
+
+     INSTANT PAINT ফিক্স (Install করার পরে Post দেখা দিতে দেরি হওয়ার আসল
+     সমস্যা): Firestore-এর নিজের IndexedDB persistence থেকেও ডেটা পড়তে
+     কিছুটা সময় লাগে, বিশেষ করে App প্রথমবার install/open করার পরে। তাই
+     localStorage-এ শেষবার দেখা ডেটার একটা হালকা কপি রাখা হচ্ছে — Page
+     load হওয়ার সাথে সাথেই (কোনো অপেক্ষা ছাড়া) সেটা দেখানো হয়, তারপর
+     onSnapshot লাইভ ডেটা এসে সেটাকে replace/update করে দেয়। App একদম
+     প্রথমবার install করে খোলার সময় (কোনো cache নেই) শুধু তখনই সামান্য
+     অপেক্ষা লাগবে — এরপর থেকে প্রতিবার সাথে সাথেই দেখাবে। */
 
   (function instantPaintFromCache() {
     try {
@@ -1072,6 +1128,9 @@
     return { id: doc.id, name: d.name || 'Group', color: d.color || '#90CAF9', order: d.order || 0 };
   }
 
+  // সর্বশেষ ৬০টা Post live-sync হবে (History/Favourite-এ আগে সেভ করা পুরনো
+  // Post cache-এ থাকলে সেগুলোও দেখাবে)। চাইলে এই limit বাড়ানো/সরানো যায়,
+  // তবে এটা রাখলে App বড় হলেও প্রতিবার সব Post না টেনে দ্রুত ও কম খরচে লোড হয়।
   db.collection('posts').orderBy('time', 'desc').limit(60).onSnapshot(snap => {
     try {
       allPosts = snap.docs.map(mapPostDoc).filter(isVisibleNow)
@@ -1085,13 +1144,19 @@
   }, err => {
     console.log('posts live-sync error:', err);
     postsSnapshotReceived = true;
+    const feed = document.getElementById('feedContainer');
+    if (feed) feed.innerHTML = '<div class="empty-msg">⚠️ ডেটা লোড করতে সমস্যা হচ্ছে।<br><span style="font-size:12px;">(' + (err && err.message ? err.message : err) + ')</span></div>';
   });
 
+  // SAFETY-NET: onSnapshot listener কোনো কারণে connect হতে দেরি করলে (slow
+  // network ইত্যাদি), ৫ সেকেন্ড পরও কোনো response না এলে একটা সরাসরি
+  // one-time fetch try করা হবে, যাতে UI অনির্দিষ্টকালের জন্য আটকে না থাকে।
+  // onSnapshot listener এরপরও চালু থাকবে এবং data এলে live update করবে।
   setTimeout(() => {
     if (postsSnapshotReceived) return;
     db.collection('posts').orderBy('time', 'desc').limit(60).get()
       .then(snap => {
-        if (postsSnapshotReceived) return;
+        if (postsSnapshotReceived) return; // ততক্ষণে onSnapshot নিজেই জবাব দিয়ে দিয়েছে
         try {
           allPosts = snap.docs.map(mapPostDoc).filter(isVisibleNow)
             .sort((a, b) => (b.rawPublishAt || b.rawTime || 0) - (a.rawPublishAt || a.rawTime || 0));
@@ -1121,7 +1186,13 @@
     applyFilterState();
   }, err => console.log('quranGroups live-sync error:', err));
 
+  // Pull-to-refresh এখন শুধু server-এর সাথে জোর করে একবার sync নিশ্চিত করে —
+  // listener গুলো এমনিতেই সবসময় লাইভ থাকে, তাই এটা আগের মতো ভারী/ধীর না।
   function refreshData() {
+    // শুধু posts-কে জোর করে server থেকে refresh করা হচ্ছে (এটাই ঘন ঘন বদলায়)।
+    // playlists/hadithGroups/quranGroups এমনিতেই onSnapshot দিয়ে সবসময় live
+    // sync হয়ে আছে — এই বড় collection গুলো বারবার পুরোটা server থেকে জোর করে
+    // আনলে (বিশেষত মোবাইল ডাটায়) pull-to-refresh অনেক ধীর মনে হচ্ছিল, তাই বাদ দেওয়া হলো।
     db.collection('posts').orderBy('time', 'desc').limit(60).get({ source: 'server' })
       .catch(err => console.log('force-sync error (live listener still active):', err))
       .finally(() => { setTimeout(() => { pullIndicator.style.height = '0px'; }, 300); });
@@ -1131,9 +1202,6 @@
   const pullIndicator = document.getElementById('pullIndicator');
   const PULL_THRESHOLD = 70;
   window.addEventListener('touchstart', (e) => {
-    // Home page fixed/non-scrollable — pull-to-refresh বন্ধ, তাই touch করলে
-    // পেজ আর নড়ে না এবং নিচের nav বাটনে ট্যাপ সাথে সাথে কাজ করে।
-    if (document.body.classList.contains('home-fixed')) { pulling = false; return; }
     if (window.scrollY === 0) { touchStartY = e.touches[0].clientY; pulling = true; } else { pulling = false; }
   }, { passive: true });
   window.addEventListener('touchmove', (e) => {
