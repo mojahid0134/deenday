@@ -20,23 +20,32 @@
 <style>
   * { margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', Roboto, sans-serif;
     -webkit-text-size-adjust:100%; text-size-adjust:100%; }
-  body { background:#f4f5f7; padding-bottom:128px; }
+  html, body { height:100%; }
+  body { background:#f4f5f7; display:flex; flex-direction:column; }
+  /* Home page (filter=all) থাকা অবস্থায় পুরো body fixed/non-scrollable — সব একটা
+     screen-এ fit হয়ে যায়, কোনো scroll লাগে না। কোনো section-এ ঢুকলে (feed view)
+     আবার normal scroll ফিরে আসে (পোস্ট বেশি হলে স্ক্রল দরকার হয় বলে)। */
+  body.home-fixed { height:100dvh; height:100vh; overflow:hidden; }
+  body:not(.home-fixed) { min-height:100dvh; min-height:100vh; overflow-y:auto; padding-bottom:92px; }
   svg.icon { width:16px; height:16px; flex-shrink:0; }
 
   /* =========================================================
      HEADER BANNER
-     ছবি সাইজ: 1184 x 527 px (banner-bg.jpg, রুট ফোল্ডারে)।
-     aspect-ratio দিয়ে জায়গা আগেই reserve করা থাকে বলে ছবি লোড
-     হওয়ার আগে/পরে পুরো পেজ কখনো নড়ে না বা layout jump করে না —
-     এটাই "স্থির/stable full-screen banner" এর মূল চাবি।
+     ছবি সাইজ (সাজেস্টেড): 1184 x 527 px (banner-bg.jpg, রুট ফোল্ডারে)।
+     এখানে height আর aspect-ratio দিয়ে জোর করে বাঁধা হয়নি — বরং
+     ভেতরের লেখার (Assalamu Alaikum / May Allah bless your day) জন্য
+     যতটুকু জায়গা লাগে ততটুকুই height নেয় (flex:0 0 auto), তাই লেখা
+     কখনো কাটা পড়ে না/ঢাকা পড়ে না, অথচ height নির্ধারিত/স্থির থাকায়
+     (কনটেন্ট static, ছবি লোড হওয়ার আগে/পরে সমান) পেজ কখনো নড়ে না।
+     ছবিটা object-fit:cover দিয়ে এই height-টাকেই ভরে রাখে।
      ========================================================= */
-  .topbar { position:relative; overflow:hidden; aspect-ratio: 1184 / 527; width:100%;
-    padding:14px 16px; background:#1a1a2e; }
+  .topbar { flex:0 0 auto; position:relative; width:100%;
+    padding:14px 16px 34px; background:#1a1a2e; }
   .topbar-bg-img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:1; }
   .topbar-overlay { position:absolute; inset:0; z-index:2;
-    background:linear-gradient(180deg, rgba(10,20,40,0.12) 0%, rgba(10,20,40,0.02) 35%, rgba(10,20,40,0.05) 100%);
+    background:linear-gradient(180deg, rgba(8,16,34,0.32) 0%, rgba(8,16,34,0.10) 45%, rgba(8,16,34,0.20) 100%);
     pointer-events:none; }
-  .topbar-content { position:relative; z-index:3; height:100%; display:flex; flex-direction:column; }
+  .topbar-content { position:relative; z-index:3; display:flex; flex-direction:column; }
 
   .top-toprow { display:flex; justify-content:space-between; align-items:flex-start; }
   .hamburger-wrap { position:relative; }
@@ -44,7 +53,7 @@
     width:34px; height:34px; border-radius:10px; font-size:17px; display:flex; align-items:center; justify-content:center; }
   .topbar-dropdown { display:none; position:absolute; top:40px; left:0;
     background:#fff; border-radius:10px; box-shadow:0 4px 16px rgba(0,0,0,0.25);
-    min-width:150px; z-index:50; overflow:hidden; }
+    min-width:150px; z-index:60; overflow:hidden; }
   .topbar-dropdown.open { display:block; }
   .topbar-dropdown div { padding:12px 16px; font-size:14px; color:#1a1a2e; font-weight:700;
     display:flex; align-items:center; gap:8px; }
@@ -62,14 +71,14 @@
     font-variant-numeric:tabular-nums;
   }
 
-  /* ===== Greeting block (Assalamu Alaikum / May Allah bless your day) ===== */
-  .greeting-block { margin-top:auto; }
-  .greeting-eyebrow { font-size:15px; font-weight:700; color:#1a3a6b; text-shadow:0 1px 4px rgba(255,255,255,0.35); }
-  .greeting-divider { display:flex; align-items:center; gap:7px; margin:8px 0; }
-  .greeting-divider .line { height:1px; width:40px; background:#1a3a6b; opacity:0.55; }
-  .greeting-divider .dot { width:5px; height:5px; border-radius:50%; background:#1a3a6b; opacity:0.7; }
-  .greeting-headline { font-size:30px; font-weight:800; color:#122a52; line-height:1.18;
-    text-shadow:0 1px 3px rgba(255,255,255,0.25); max-width:64%; }
+  /* ===== Greeting block (সাদা রঙে, header-এর একদম উপরের দিকে) ===== */
+  .greeting-block { margin-top:10px; }
+  .greeting-eyebrow { font-size:14.5px; font-weight:700; color:#fff; text-shadow:0 1px 5px rgba(0,0,0,0.4); }
+  .greeting-divider { display:flex; align-items:center; gap:7px; margin:7px 0; }
+  .greeting-divider .line { height:1px; width:36px; background:#fff; opacity:0.75; }
+  .greeting-divider .dot { width:5px; height:5px; border-radius:50%; background:#fff; opacity:0.85; }
+  .greeting-headline { font-size:25px; font-weight:800; color:#fff; line-height:1.2;
+    text-shadow:0 1px 6px rgba(0,0,0,0.45); max-width:70%; }
 
   /* ===== Modals (Date / Donate) ===== */
   .modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:550;
@@ -91,51 +100,60 @@
 
   /* ===== Pull to Refresh ===== */
   .pull-indicator { display:flex; align-items:center; justify-content:center; height:0; overflow:hidden;
-    transition:height 0.15s ease; background:#fff; }
+    transition:height 0.15s ease; background:#fff; flex:0 0 auto; }
   .pull-indicator .spinner { width:22px; height:22px; border:3px solid #dbeefe; border-top-color:#0EA5E9;
     border-radius:50%; animation:spin 0.7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
   /* =========================================================
-     DAILY QURAN CARD — ছোট, image-এর মতো, header-এর নিচে হালকা
-     overlap করে বসানো হয়েছে
+     HOME MAIN — Daily Quran card + Section grid, header আর bottom
+     nav-এর মাঝের বাকি পুরো জায়গাটা flex:1 দিয়ে ভরে রাখে, তাই
+     home page কখনো স্ক্রল করা লাগে না — device-এর height যাই হোক,
+     সবটা ঠিক এক screen-এ বসে যায়।
      ========================================================= */
-  .dq-wrap { position:relative; z-index:4; padding:0 14px; margin-top:-16px; }
+  #homeMain { flex:1 1 auto; min-height:0; display:flex; flex-direction:column;
+    padding:0 14px calc(14px + 88px); overflow:hidden; }
+
+  .dq-wrap { flex:0 0 auto; position:relative; z-index:4; margin-top:-16px; }
   .daily-quran-card {
-    background:#fff; border-radius:20px; padding:16px 16px 14px;
+    background:#fff; border-radius:18px; padding:13px 15px 12px;
     box-shadow:0 8px 20px rgba(20,40,80,0.10); cursor:pointer;
-    min-height:150px; display:flex; flex-direction:column;
+    display:flex; flex-direction:column;
   }
-  .dq-header { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
-  .dq-icon { width:34px; height:34px; border-radius:10px; background:#E0F2FE; color:#0369A1;
-    display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; }
-  .dq-title { font-size:15.5px; font-weight:800; color:#1a1a2e; }
-  .dq-arabic { font-family:'Amiri','Noto Naskh Arabic',serif; font-size:19px; line-height:2;
-    direction:rtl; text-align:right; color:#12213f; margin-bottom:10px; }
+  .dq-header { display:flex; align-items:center; gap:9px; margin-bottom:8px; }
+  .dq-icon { width:30px; height:30px; border-radius:9px; background:#E0F2FE; color:#0369A1;
+    display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; }
+  .dq-title { font-size:14.5px; font-weight:800; color:#1a1a2e; }
+  .dq-arabic { font-family:'Amiri','Noto Naskh Arabic',serif; font-size:17px; line-height:1.85;
+    direction:rtl; text-align:right; color:#12213f; margin-bottom:8px;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
   .dq-ayah-badge { display:inline-flex; align-items:center; justify-content:center;
-    width:22px; height:22px; border-radius:50%; background:#E0F2FE; color:#0369A1;
-    font-size:11px; font-weight:800; margin-inline-start:6px; vertical-align:middle; direction:ltr; }
-  .dq-translation { font-size:13.5px; line-height:1.7; color:#3a3a45; margin-bottom:8px; }
-  .dq-ref { font-size:12.5px; font-weight:700; color:#0369A1; }
-  .dq-skeleton { color:#aaa; font-size:13px; }
+    width:20px; height:20px; border-radius:50%; background:#E0F2FE; color:#0369A1;
+    font-size:10.5px; font-weight:800; margin-inline-start:6px; vertical-align:middle; direction:ltr; }
+  .dq-translation { font-size:12.5px; line-height:1.55; color:#3a3a45; margin-bottom:6px;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .dq-ref { font-size:11.5px; font-weight:700; color:#0369A1; }
+  .dq-skeleton { color:#aaa; font-size:13px; -webkit-line-clamp:1; }
 
   /* =========================================================
      HOME SECTION GRID — সব section একসাথে, ৪ কলামে, স্ক্রল/মোর
-     ছাড়াই — reference image অনুযায়ী
+     ছাড়াই — বাকি সব জায়গা সমানভাবে ভরে রাখে
      ========================================================= */
-  .home-grid-wrap { padding:16px 14px 6px; }
-  .home-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:16px 10px; }
-  .home-grid-item { display:flex; flex-direction:column; align-items:center; gap:7px; cursor:pointer; }
+  .home-grid-wrap { flex:1 1 auto; min-height:0; display:flex; margin-top:10px; }
+  .home-grid { flex:1; width:100%; display:grid; grid-template-columns:repeat(4, 1fr);
+    grid-template-rows:repeat(4, 1fr); gap:2px 6px; align-items:center; justify-items:center; }
+  .home-grid-item { display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:5px; cursor:pointer; width:100%; height:100%; min-height:0; }
   .home-grid-icon {
-    width:100%; aspect-ratio:1/1; max-width:66px; border-radius:20px;
-    display:flex; align-items:center; justify-content:center;
+    width:clamp(38px, 8.5vh, 62px); height:clamp(38px, 8.5vh, 62px); border-radius:16px;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
     box-shadow:0 3px 8px rgba(20,40,80,0.07), inset 0 1px 0 rgba(255,255,255,0.55);
   }
-  .home-grid-icon span { font-size:26px; line-height:1; }
-  .home-grid-icon svg { width:24px; height:24px; }
-  .home-grid-label { font-size:10.5px; font-weight:700; color:#333; text-align:center; line-height:1.25; }
+  .home-grid-icon span { font-size:clamp(15px, 3.6vh, 24px); line-height:1; }
+  .home-grid-icon svg { width:60%; height:60%; }
+  .home-grid-label { font-size:clamp(8.5px, 1.6vh, 10.5px); font-weight:700; color:#333; text-align:center; line-height:1.2; }
 
-  /* ===== Feed (only shown when browsing inside a section) ===== */
+  /* ===== Feed (only shown when browsing inside a section — normal scroll) ===== */
   .feed { display:none; padding:14px; flex-direction:column; gap:14px; }
   .post-card { background:#fff; border-radius:16px; padding:16px; box-shadow:0 2px 10px rgba(0,0,0,0.06); }
   .post-header { display:flex; align-items:flex-start; gap:10px; }
@@ -292,17 +310,19 @@
   <div class="pull-indicator" id="pullIndicator"><div class="spinner"></div></div>
 
   <!-- ===== Home-only content: Daily Quran card + full section grid (কোনো Post নেই) ===== -->
-  <div class="dq-wrap">
-    <div class="daily-quran-card" id="dailyQuranCard">
-      <div class="dq-header"><div class="dq-icon">📖</div><div class="dq-title">Daily Quran</div></div>
-      <div class="dq-arabic dq-skeleton" id="dqArabic">লোড হচ্ছে...</div>
-      <div class="dq-translation" id="dqTranslation"></div>
-      <div class="dq-ref" id="dqRef"></div>
+  <div id="homeMain">
+    <div class="dq-wrap">
+      <div class="daily-quran-card" id="dailyQuranCard">
+        <div class="dq-header"><div class="dq-icon">📖</div><div class="dq-title">Daily Quran</div></div>
+        <div class="dq-arabic dq-skeleton" id="dqArabic">লোড হচ্ছে...</div>
+        <div class="dq-translation" id="dqTranslation"></div>
+        <div class="dq-ref" id="dqRef"></div>
+      </div>
     </div>
-  </div>
 
-  <div class="home-grid-wrap" id="homeGridWrap">
-    <div class="home-grid" id="homeGrid"></div>
+    <div class="home-grid-wrap" id="homeGridWrap">
+      <div class="home-grid" id="homeGrid"></div>
+    </div>
   </div>
 
   <div id="sectionTitleBox"></div>
@@ -473,10 +493,15 @@
     homeGrid.appendChild(item);
   });
 
-  /* ================= Daily Quran card (ছবির মতো ছোট box — প্রতিদিন একটা আয়াত) ================= */
+  /* ================= Daily Quran card =================
+     - অর্থ এখন বাংলায় (আগে English ছিল)।
+     - এই আয়াতটা sessionStorage-এ রাখা হয় (localStorage না) — তাই
+       App-এর ভেতরে page change/navigate করলে আয়াত একই থাকে, কিন্তু
+       App পুরোপুরি বন্ধ করে (recent থেকে সরিয়ে/kill করে) আবার খুললে
+       নতুন session শুরু হয় আর sessionStorage খালি হয়ে যায় — ফলে
+       প্রতিবার App fresh ওপেন করলেই নতুন একটা random আয়াত দেখাবে। */
   const TOTAL_AYAHS = 6236;
-  function pad2(n) { return String(n).padStart(2, '0'); }
-  function todayKey() { const d = new Date(); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+  const SESSION_AYAH_KEY = 'sessionDailyAyah_v2';
 
   function renderDailyAyah(p) {
     document.getElementById('dqArabic').classList.remove('dq-skeleton');
@@ -489,24 +514,22 @@
   }
 
   function loadDailyAyah() {
-    const cacheKey = 'dailyAyah_' + todayKey();
-    const cached = localStorage.getItem(cacheKey);
+    const cached = sessionStorage.getItem(SESSION_AYAH_KEY);
     if (cached) {
       try { renderDailyAyah(JSON.parse(cached)); return; } catch (e) {}
     }
-    const seed = Math.floor(Date.now() / 86400000);
-    const ayahNum = (seed % TOTAL_AYAHS) + 1;
-    fetch('https://api.alquran.cloud/v1/ayah/' + ayahNum + '/editions/quran-uthmani,en.sahih')
+    const ayahNum = Math.floor(Math.random() * TOTAL_AYAHS) + 1;
+    fetch('https://api.alquran.cloud/v1/ayah/' + ayahNum + '/editions/quran-uthmani,bn.bengali')
       .then(r => r.json())
       .then(json => {
         if (!json.data || json.data.length < 2) throw new Error('bad response');
-        const arEd = json.data[0], enEd = json.data[1];
+        const arEd = json.data[0], bnEd = json.data[1];
         const payload = {
-          arabic: arEd.text, translation: enEd.text,
+          arabic: arEd.text, translation: bnEd.text,
           numberInSurah: arEd.numberInSurah,
           surahName: arEd.surah.englishName, surahNumber: arEd.surah.number
         };
-        try { localStorage.setItem(cacheKey, JSON.stringify(payload)); } catch (e) {}
+        try { sessionStorage.setItem(SESSION_AYAH_KEY, JSON.stringify(payload)); } catch (e) {}
         renderDailyAyah(payload);
       })
       .catch(() => {
@@ -804,9 +827,10 @@
 
   function setFilterTabs(activeKey) {
     document.querySelectorAll('.nf-nav-item').forEach(f => f.classList.remove('active', 'rewards-active'));
-    const map = { filterYourFeeds: 0, filterFavourite: 1, filterHistory: 2 };
-    if (activeKey && activeKey in map) {
-      const el = document.querySelectorAll('.nf-nav-item')[map[activeKey]];
+    const map = { filterYourFeeds: 'home', filterFavourite: 'bookmark', filterHistory: 'history' };
+    const navKey = activeKey ? map[activeKey] : null;
+    if (navKey) {
+      const el = document.querySelector('.nf-nav-item[data-nav-key="' + navKey + '"]');
       if (el) el.classList.add('active');
     }
   }
@@ -834,17 +858,17 @@
     return sortByOrder(allPosts.filter(p => p.playlistId === playlistId));
   }
 
-  /* ===== Home view (Daily Quran card + Section grid) <-> Feed view টগল করার helper ===== */
+  /* ===== Home view (Daily Quran card + Section grid, fixed/no-scroll) <-> Feed view (scrollable) টগল ===== */
   function showHomeView() {
-    document.getElementById('dailyQuranCard').parentElement.style.display = 'block';
-    document.getElementById('homeGridWrap').style.display = 'block';
+    document.getElementById('homeMain').style.display = 'flex';
     document.getElementById('sectionTitleBox').innerHTML = '';
     document.getElementById('feedContainer').style.display = 'none';
+    document.body.classList.add('home-fixed');
   }
   function showFeedView() {
-    document.getElementById('dailyQuranCard').parentElement.style.display = 'none';
-    document.getElementById('homeGridWrap').style.display = 'none';
+    document.getElementById('homeMain').style.display = 'none';
     document.getElementById('feedContainer').style.display = 'flex';
+    document.body.classList.remove('home-fixed');
   }
 
   function applyFilterState() {
