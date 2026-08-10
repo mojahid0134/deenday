@@ -14,8 +14,8 @@
 <link rel="dns-prefetch" href="https://firestore.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;600&display=swap" rel="stylesheet">
 
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js" defer></script>
 
 <style>
   @font-face {
@@ -94,13 +94,6 @@
   .grid-tile-icon { font-size:30px; line-height:1; }
   .grid-tile-label { font-size:10.5px; font-weight:700; color:#1a1a2e; line-height:1.25;
     text-align:center; white-space:normal; overflow-wrap:break-word; }
-
-  /* ===== Pull to Refresh ===== */
-  .pull-indicator { display:flex; align-items:center; justify-content:center; height:0; overflow:hidden;
-    transition:height 0.15s ease; background:#fff; }
-  .pull-indicator .spinner { width:22px; height:22px; border:3px solid #dbeefe; border-top-color:#0EA5E9;
-    border-radius:50%; animation:spin 0.7s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
 
   /* ===== Home Content (Daily Quran + Full Section Grid) ===== */
   .section-panel { position:relative; z-index:3; background:#fff; margin-top:0;
@@ -286,8 +279,6 @@
     </div>
   </div>
 
-  <div class="pull-indicator" id="pullIndicator"><div class="spinner"></div></div>
-
   <div class="section-panel" id="homeContent">
     <div class="daily-quran-card" id="dailyQuranCard">
       <div class="dq-header">
@@ -310,8 +301,9 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
   </button>
 
-<script src="nav.js"></script>
-<script>
+<script src="nav.js" defer></script>
+<script defer>
+window.addEventListener('DOMContentLoaded', function () {
   window.addEventListener('pageshow', function(event) { if (event.persisted) window.location.reload(); });
 
   const APP_NAME = "Deen Day";
@@ -481,23 +473,15 @@
   }
   buildFullSectionGrid();
 
-  /* ================= Daily Quran Card — প্রতিদিন Auto বদলানো Ayah (Admin কাজ লাগে না) =================
-     Global ayah number (১-৬২৩৬, পুরো Quran-এর মোট আয়াত) তারিখ থেকে নির্ধারিত হয় (deterministic),
-     তাই একই দিনে সবার জন্য একই আয়াত দেখাবে, আর পরদিন নিজে থেকেই বদলে যাবে। */
+  /* ================= Daily Quran Card — App প্রতিবার খোলা/চালু হলেই নতুন Random Ayah =================
+     আগে তারিখ অনুযায়ী দিনে একবার Ayah fix হয়ে থাকতো — এখন সেটা বাদ দেওয়া হয়েছে।
+     এখন App বন্ধ করে আবার খুললে (মানে page-টা আবার লোড হলেই) প্রতিবার সম্পূর্ণ নতুন
+     একটা Random Ayah আসবে, কোনো caching/date-lock ছাড়াই। */
   const QURAN_API_BASE = 'https://api.alquran.cloud/v1';
-  const DAILY_AYAH_CACHE_KEY = 'daily_ayah_cache_v1';
   const TOTAL_AYAH_COUNT = 6236;
 
-  function todayDateKey() {
-    const now = new Date();
-    return now.getFullYear() + '-' + (now.getMonth() + 1) + '-' + now.getDate();
-  }
-  function getDailyAyahGlobalNumber() {
-    const now = new Date();
-    const start = new Date(now.getFullYear(), 0, 1);
-    const dayOfYear = Math.floor((now - start) / 86400000) + 1;
-    const seed = now.getFullYear() * 1000 + dayOfYear;
-    return (seed % TOTAL_AYAH_COUNT) + 1;
+  function getRandomAyahNumber() {
+    return Math.floor(Math.random() * TOTAL_AYAH_COUNT) + 1;
   }
   function renderDailyAyah(editions) {
     const box = document.getElementById('dqBody');
@@ -516,17 +500,11 @@
     `;
   }
   function loadDailyAyah() {
-    const key = todayDateKey();
-    try {
-      const cached = JSON.parse(localStorage.getItem(DAILY_AYAH_CACHE_KEY) || 'null');
-      if (cached && cached.dateKey === key && cached.data) { renderDailyAyah(cached.data); return; }
-    } catch (e) {}
-    const n = getDailyAyahGlobalNumber();
+    const n = getRandomAyahNumber();
     fetch(QURAN_API_BASE + '/ayah/' + n + '/editions/quran-uthmani,bn.bengali,en.sahih')
       .then(r => r.json())
       .then(json => {
         if (!json.data) throw new Error('bad response');
-        try { localStorage.setItem(DAILY_AYAH_CACHE_KEY, JSON.stringify({ dateKey: key, data: json.data })); } catch (e) {}
         renderDailyAyah(json.data);
       })
       .catch(() => {
@@ -564,22 +542,13 @@
   }
 
   // ================================
-  // OFFLINE PERSISTENCE চালু করা (গুরুত্বপূর্ণ ফিক্স):
-  // আগে এটা ইচ্ছাকৃতভাবে বাদ দেওয়া হয়েছিল multi-tab browser lock-এর ভয়ে।
-  // কিন্তু Sketchware WebView app-এ একটাই instance/tab চলে (multiple tab
-  // এর ঝামেলা নেই), তাই এখন নিরাপদে চালু করা হচ্ছে। এটা IndexedDB-তে
-  // posts/playlists/groups স্থায়ীভাবে সেভ রাখে — তাই app বন্ধ করে আবার
-  // খোলা, বা কোনো Post থেকে Home-এ ফেরা — এসব ক্ষেত্রে network লাগার আগেই
-  // সাথে সাথে আগের ডাটা দেখাবে, তারপর ব্যাকগ্রাউন্ডে নতুন ডাটা sync হবে।
-  // নিচের localStorage instant-paint cache-টাও রাখা হলো অতিরিক্ত fallback হিসেবে।
+  // OFFLINE PERSISTENCE (enablePersistence) সরিয়ে দেওয়া হয়েছে:
+  // এটা প্রতিটা page load-এ নতুন করে IndexedDB connection খোলে, যেটা এই app-এ
+  // (একাধিক আলাদা HTML page-এর মধ্যে বারবার নেভিগেট করা — Home ↔ Audio Quran ↔
+  // Bookmark ইত্যাদি) প্রতিবারই কিছুটা সময় নিচ্ছিল, ফলে বাটনগুলো "দেরিতে কাজ করছে"
+  // মনে হচ্ছিল। নিচের localStorage instant-paint cache দিয়েই আগের ডাটা সাথে সাথে
+  // দেখানো হয় (হালকা এবং দ্রুত), তাই ভারী IndexedDB persistence আর দরকার নেই।
   // ================================
-  try {
-    db.enablePersistence({ synchronizeTabs: true }).catch(err => {
-      console.log('Firestore persistence error:', err.code);
-    });
-  } catch (e) {
-    console.log('enablePersistence() error:', e);
-  }
 
   let postsSnapshotReceived = false; // Firestore থেকে অন্তত একবার real response এসেছে কিনা — এটা false থাকলে "No posts yet" না দেখিয়ে "Loading posts..." দেখাবে
   let allPosts = [];
@@ -1186,36 +1155,21 @@
     applyFilterState();
   }, err => console.log('quranGroups live-sync error:', err));
 
-  // Pull-to-refresh এখন শুধু server-এর সাথে জোর করে একবার sync নিশ্চিত করে —
-  // listener গুলো এমনিতেই সবসময় লাইভ থাকে, তাই এটা আগের মতো ভারী/ধীর না।
-  function refreshData() {
-    // শুধু posts-কে জোর করে server থেকে refresh করা হচ্ছে (এটাই ঘন ঘন বদলায়)।
-    // playlists/hadithGroups/quranGroups এমনিতেই onSnapshot দিয়ে সবসময় live
-    // sync হয়ে আছে — এই বড় collection গুলো বারবার পুরোটা server থেকে জোর করে
-    // আনলে (বিশেষত মোবাইল ডাটায়) pull-to-refresh অনেক ধীর মনে হচ্ছিল, তাই বাদ দেওয়া হলো।
-    db.collection('posts').orderBy('time', 'desc').limit(60).get({ source: 'server' })
-      .catch(err => console.log('force-sync error (live listener still active):', err))
-      .finally(() => { setTimeout(() => { pullIndicator.style.height = '0px'; }, 300); });
-  }
+  // এই ফাংশনগুলো HTML-এর ভেতরে সরাসরি onclick="..." দিয়ে ডাকা হয়, তাই DOMContentLoaded
+  // wrapper-এর ভেতরে থাকা সত্ত্বেও window-এ explicit ভাবে expose করে দেওয়া দরকার —
+  // নাহলে "function is not defined" error দেবে।
+  window.copyNumber = copyNumber;
+  window.copyPostText = copyPostText;
+  window.goBackFilter = goBackFilter;
+  window.recordVisit = recordVisit;
+  window.setPostSort = setPostSort;
+  window.sharePost = sharePost;
+  window.toggleFavorite = toggleFavorite;
 
-  let touchStartY = 0, pulling = false;
-  const pullIndicator = document.getElementById('pullIndicator');
-  const PULL_THRESHOLD = 70;
-  window.addEventListener('touchstart', (e) => {
-    if (window.scrollY === 0) { touchStartY = e.touches[0].clientY; pulling = true; } else { pulling = false; }
-  }, { passive: true });
-  window.addEventListener('touchmove', (e) => {
-    if (!pulling) return;
-    const diff = e.touches[0].clientY - touchStartY;
-    if (diff > 0) pullIndicator.style.height = Math.min(diff * 0.5, PULL_THRESHOLD) + 'px';
-  }, { passive: true });
-  window.addEventListener('touchend', () => {
-    if (!pulling) return;
-    const currentHeight = parseInt(pullIndicator.style.height || '0', 10);
-    pulling = false;
-    if (currentHeight >= PULL_THRESHOLD - 5) { pullIndicator.style.height = '50px'; refreshData(); }
-    else pullIndicator.style.height = '0px';
-  });
+  // Pull-to-refresh (টান দিলে refresh) বন্ধ করে দেওয়া হয়েছে — Firestore
+  // onSnapshot listener এমনিতেই সবসময় live sync রাখে, তাই আলাদা refresh লাগে না।
+
+});
 </script>
 
 </body>
