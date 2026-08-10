@@ -51,6 +51,7 @@
     ].forEach(item => {
       const btn = document.createElement('button');
       btn.className = 'nf-nav-item' + (active === item.key ? ' active' : '');
+      btn.setAttribute('data-key', item.key);
       btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[item.key]}</svg><span>${item.label}</span>`;
       btn.addEventListener('click', () => handleNavClick(item.key));
       nav.appendChild(btn);
