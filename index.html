@@ -834,11 +834,16 @@ window.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  // আগে এখানে .nf-nav-item[0], [1], [2] — এভাবে position index দিয়ে বাটন খোঁজা হতো,
+  // যেটা Audio Quran বাটন যোগ হওয়ার পর সব index এক ঘর করে সরে গিয়ে ভুল বাটন
+  // highlight করছিল (Bookmark-এ ক্লিক করলে Audio Quran active দেখাচ্ছিল ইত্যাদি)।
+  // এখন data-key attribute দিয়ে সরাসরি সঠিক বাটন খোঁজা হয় — নাম ধরে, position
+  // ধরে না — তাই ভবিষ্যতে নতুন বাটন যোগ হলেও এই বাগ আর হবে না।
   function setFilterTabs(activeKey) {
     document.querySelectorAll('.nf-nav-item').forEach(f => f.classList.remove('active', 'rewards-active'));
-    const map = { filterYourFeeds: 0, filterFavourite: 1, filterHistory: 2 };
+    const map = { filterYourFeeds: 'home', filterFavourite: 'bookmark', filterHistory: 'history' };
     if (activeKey && activeKey in map) {
-      const el = document.querySelectorAll('.nf-nav-item')[map[activeKey]];
+      const el = document.querySelector('.nf-nav-item[data-key="' + map[activeKey] + '"]');
       if (el) el.classList.add('active');
     }
   }
