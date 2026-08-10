@@ -3,15 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Audio Quran</title>
+<title>Al-Quran</title>
 
 <link rel="preconnect" href="https://api.alquran.cloud" crossorigin>
-<link rel="preconnect" href="https://cdn.islamic.network" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
+  @font-face {
+    font-family: 'Uthman Hafs';
+    src: url('https://cdn.jsdelivr.net/gh/mustafa0x/qpc-fonts@f93bf5f3/various-woff2/UthmanicHafs1%20Ver09.woff2') format('woff2'),
+         url('https://cdn.jsdelivr.net/gh/mustafa0x/qpc-fonts@f93bf5f3/various-woff/UthmanicHafs1%20Ver09.woff') format('woff');
+    font-weight: normal; font-style: normal; font-display: swap;
+  }
   * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Roboto, sans-serif; }
   html, body { height:100%; background:#f4f5f7; }
 
@@ -29,47 +34,69 @@
 
   .page-body { position:fixed; top:52px; left:0; right:0; bottom:128px; overflow-y:auto; -webkit-overflow-scrolling:touch; }
 
-  .search-box { padding:12px 16px; background:#f4f5f7; position:sticky; top:0; z-index:5; display:flex; gap:8px; align-items:center; }
+  /* ===== Surah list screen ===== */
+  .search-box { padding:12px 16px; background:#f4f5f7; position:sticky; top:0; z-index:5; }
   .search-input {
-    flex:1; padding:11px 14px; border-radius:14px; border:none;
+    width:100%; padding:11px 14px; border-radius:14px; border:none;
     background:#fff; box-shadow:0 1px 4px rgba(0,0,0,0.08); font-size:14px; color:#1a1a2e;
   }
-
-  /* ===== Full Quran Audio hero card ===== */
-  .full-quran-card {
-    margin:0 16px 14px; background:linear-gradient(135deg,#0369A1,#0EA5E9); color:#fff;
-    border-radius:18px; padding:16px 16px; display:flex; align-items:center; gap:14px; cursor:pointer;
-    box-shadow:0 6px 16px rgba(3,105,161,0.25);
-  }
-  .full-quran-icon { width:48px; height:48px; border-radius:50%; background:rgba(255,255,255,0.2);
-    display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
-  .full-quran-info { flex:1; min-width:0; }
-  .full-quran-title { font-size:15.5px; font-weight:800; }
-  .full-quran-sub { font-size:12px; color:#DBEEFE; margin-top:2px; }
-  .full-quran-play { width:38px; height:38px; border-radius:50%; background:#fff; color:#0369A1;
-    display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; }
-
-  .list-label { padding:2px 16px 8px; font-size:12.5px; font-weight:700; color:#888; }
-
-  .surah-list { padding:0 16px 24px; }
-  .surah-row {
+  .surah-list { padding:4px 16px 24px; }
+  .surah-card {
     display:flex; align-items:center; gap:12px; background:#fff; border-radius:14px;
     padding:12px 14px; margin-bottom:10px; box-shadow:0 1px 4px rgba(0,0,0,0.06);
   }
-  .surah-row.playing { box-shadow:0 0 0 2px #0EA5E9, 0 1px 4px rgba(0,0,0,0.06); }
   .surah-num {
-    width:36px; height:36px; border-radius:11px; background:linear-gradient(135deg,#0369A1,#0EA5E9);
-    color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; flex-shrink:0;
+    width:38px; height:38px; border-radius:11px; background:linear-gradient(135deg,#0369A1,#0EA5E9);
+    color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0;
   }
   .surah-info { flex:1; min-width:0; }
-  .surah-en { font-weight:700; color:#1a1a2e; font-size:14.5px; }
-  .surah-sub { color:#888; font-size:11.5px; margin-top:2px; }
-  .surah-ar { font-family:'Amiri','Noto Naskh Arabic',serif; font-size:19px; color:#0369A1; flex-shrink:0; }
-  .surah-play-btn {
-    flex-shrink:0; width:36px; height:36px; border-radius:50%; border:none;
-    background:#E0F2FE; color:#0369A1; font-size:14px; display:flex; align-items:center; justify-content:center;
+  .surah-en { font-weight:700; color:#1a1a2e; font-size:15px; }
+  .surah-sub { color:#888; font-size:12px; margin-top:2px; }
+  .surah-ar { font-family:'Uthman Hafs','Amiri','Noto Naskh Arabic',serif; font-size:22px; color:#0369A1; flex-shrink:0; }
+
+  .fav-toggle-btn {
+    flex-shrink:0; background:#fff; border:none; width:42px; height:42px; border-radius:14px;
+    box-shadow:0 1px 4px rgba(0,0,0,0.08); display:flex; align-items:center; justify-content:center;
   }
-  .surah-play-btn.playing { background:#0EA5E9; color:#fff; }
+  .fav-toggle-btn svg { width:19px; height:19px; color:#c9820a; }
+  .fav-toggle-btn.active svg { fill:#c9820a; }
+  .surah-card { flex-wrap:wrap; }
+  .surah-add-fav {
+    flex-basis:100%; margin-top:6px; font-size:11px; font-weight:700; color:#0EA5E9;
+    display:flex; align-items:center; gap:4px;
+  }
+  .surah-add-fav.active { color:#c9820a; }
+  .surah-add-fav svg { width:13px; height:13px; }
+
+  /* ===== Surah detail screen ===== */
+  .surah-header {
+    background:linear-gradient(135deg,#0369A1,#0EA5E9); color:#fff;
+    text-align:center; padding:22px 16px 20px; margin-bottom:14px;
+  }
+  .surah-header .ar-name { font-family:'Uthman Hafs','Amiri','Noto Naskh Arabic',serif; font-size:34px; margin-bottom:6px; }
+  .surah-header .en-name { font-size:15px; font-weight:700; }
+  .surah-header .meta { font-size:12px; color:#DBEEFE; margin-top:4px; }
+  .bismillah {
+    text-align:center; font-family:'Uthman Hafs','Amiri','Noto Naskh Arabic',serif; font-size:26px;
+    color:#0369A1; padding:6px 16px 18px;
+  }
+
+  .ayah-block { background:#fff; margin:0 12px 12px; border-radius:16px; padding:16px 16px 14px; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
+  .ayah-num-badge {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:26px; height:26px; border-radius:50%; background:#E0F2FE; color:#0369A1;
+    font-size:12px; font-weight:700; margin-bottom:10px;
+  }
+  .ayah-arabic {
+    font-family:'Uthman Hafs','Amiri','Noto Naskh Arabic',serif; font-size:25px; line-height:2.5;
+    direction:rtl; text-align:right; color:#1a1a2e; margin-bottom:12px;
+  }
+  .ayah-translit { font-size:14px; line-height:1.8; color:#5a3a1e; margin-bottom:8px; font-style:italic; }
+  .ayah-translit::before { content:"উচ্চারণ: "; font-weight:700; font-style:normal; color:#a8730a; }
+  .ayah-bn { font-size:15px; line-height:1.8; color:#0369A1; margin-bottom:8px; }
+  .ayah-bn::before { content:"বাংলা: "; font-weight:700; color:#8a5a2e; }
+  .ayah-en { font-size:13.5px; line-height:1.7; color:#555; font-style:italic; }
+  .ayah-en::before { content:"English: "; font-weight:700; font-style:normal; color:#888; }
 
   .state-box { text-align:center; padding:60px 24px; color:#888; font-size:14px; line-height:1.7; }
   .state-box button {
@@ -82,7 +109,24 @@
   }
   @keyframes spin { to { transform:rotate(360deg); } }
 
-  /* ===== bottom sticky audio player (same state as quran.html — playback resumes seamlessly) ===== */
+  .offline-tag { display:inline-block; background:#eafaf0; color:#1e8a5f; font-size:11px; font-weight:700; padding:3px 10px; border-radius:10px; margin-top:6px; }
+
+  /* ===== Audio: Full Quran / Listen buttons ===== */
+  .search-box { display:flex; gap:8px; align-items:center; }
+  .search-box .search-input { flex:1; }
+  .full-quran-btn {
+    flex-shrink:0; background:linear-gradient(135deg,#0369A1,#0EA5E9); color:#fff; border:none;
+    padding:0 14px; height:40px; border-radius:14px; font-size:12.5px; font-weight:700;
+    display:flex; align-items:center; gap:5px; white-space:nowrap;
+  }
+  .listen-btn {
+    margin-top:10px; background:rgba(255,255,255,0.16); color:#fff; border:1px solid rgba(255,255,255,0.35);
+    padding:7px 16px; border-radius:16px; font-size:12.5px; font-weight:700;
+    display:inline-flex; align-items:center; gap:6px;
+  }
+  .listen-btn.is-playing { background:#fff; color:#0369A1; }
+
+  /* ===== Audio: bottom sticky player ===== */
   .audio-bar {
     display:none; position:fixed; left:0; right:0; bottom:128px; z-index:480;
     background:linear-gradient(135deg,#0C4A6E,#0369A1); color:#fff;
@@ -91,7 +135,7 @@
   .audio-bar.active { display:block; }
   .audio-row { display:flex; align-items:center; gap:10px; }
   .audio-info { flex:1; min-width:0; }
-  .audio-surah-ar { font-family:'Amiri','Noto Naskh Arabic',serif; font-size:17px; line-height:1.2; }
+  .audio-surah-ar { font-family:'Uthman Hafs','Amiri','Noto Naskh Arabic',serif; font-size:17px; line-height:1.2; }
   .audio-surah-en { font-size:11.5px; color:#DBEEFE; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .audio-controls { display:flex; align-items:center; gap:6px; flex-shrink:0; }
   .audio-controls button {
@@ -107,7 +151,7 @@
 
 <div class="topbar">
   <button class="back-btn" id="backBtn">←</button>
-  <div class="page-title">🎧 Audio Quran</div>
+  <div class="page-title" id="pageTitle">Al-Quran</div>
 </div>
 <div class="page-body" id="pageBody"></div>
 
@@ -132,18 +176,130 @@ window.addEventListener('pageshow', function(event) { if (event.persisted) windo
 
 const params = new URLSearchParams(window.location.search);
 const isAppMode = params.get('app') === '1';
+const surahParam = params.get('surah');
+const audioParam = params.get('audio') === '1';
 
 const API_BASE = 'https://api.alquran.cloud/v1';
-const LIST_CACHE_KEY = 'quran_surah_list_v1'; // quran.html-এর সাথে shared cache
+const EDITIONS = 'quran-uthmani,bn.bengali,en.sahih';
+const TRANSLIT_BASE = 'https://cdn.jsdelivr.net/npm/quran-json@3.1.2/dist/chapters';
+const LIST_CACHE_KEY = 'quran_surah_list_v1';
 
+/* ===== Latin (Tanzil) -> Bengali phonetic uccharon converter =====
+   Source transliteration: Tanzil.net (via quran-json). Converted to Bengali
+   script with a systematic, consistent rule-set (sounds -> Bangla graphemes).
+   Spelling may differ slightly from printed Bangla Quran Sharif books, since
+   there is no single universal standard for Bangla উচ্চারণ spelling. */
+const TRANSLIT_CONS = {
+  kh:'খ', gh:'গ', sh:'শ', th:'থ', dh:'ধ',
+  b:'ব', t:'ত', j:'জ', h:'হ', d:'দ', r:'র', z:'য',
+  s:'স', f:'ফ', q:'ক', k:'ক', l:'ল', m:'ম', n:'ন',
+  c:'ক', v:'ভ', p:'প', g:'গ',
+  w:'ওয়', y:'য়'
+};
+const TRANSLIT_CONS_KEYS = Object.keys(TRANSLIT_CONS).sort((a,b)=>b.length-a.length);
+
+const TRANSLIT_VOWEL_INDEP = {
+  aa:'আ', ee:'ঈ', oo:'ঊ', ai:'ঐ', au:'ঔ', ay:'ঐ', aw:'ঔ',
+  a:'আ', i:'ই', u:'উ', e:'এ', o:'ও'
+};
+const TRANSLIT_VOWEL_MATRA = {
+  aa:'া', ee:'ী', oo:'ূ', ai:'ৈ', au:'ৌ', ay:'ৈ', aw:'ৌ',
+  a:'া', i:'ি', u:'ু', e:'ে', o:'ো'
+};
+const TRANSLIT_VOWEL_KEYS = Object.keys(TRANSLIT_VOWEL_INDEP).sort((a,b)=>b.length-a.length);
+
+function translitTokenize(word) {
+  word = word.replace(/AA/g, '\x01').replace(/['\u2019]/g, '\x01');
+  const tokens = [];
+  let i = 0;
+  const n = word.length;
+  while (i < n) {
+    if (word[i] === '\x01') { tokens.push(['BREAK', null]); i += 1; continue; }
+    let matched = false;
+    for (const k of TRANSLIT_CONS_KEYS) {
+      if (word.substr(i, k.length).toLowerCase() === k) {
+        tokens.push(['C', k]); i += k.length; matched = true; break;
+      }
+    }
+    if (matched) continue;
+    for (const k of TRANSLIT_VOWEL_KEYS) {
+      if (word.substr(i, k.length).toLowerCase() === k) {
+        tokens.push(['V', k]); i += k.length; matched = true; break;
+      }
+    }
+    if (matched) continue;
+    i += 1;
+  }
+  return tokens;
+}
+
+function translitShamsiyya(tokens) {
+  const out = [];
+  let i = 0;
+  const n = tokens.length;
+  while (i < n) {
+    if (tokens[i][0] === 'C' && tokens[i][1] === 'l' && i + 2 < n &&
+        tokens[i+1][0] === 'C' && tokens[i+2][0] === 'C' &&
+        tokens[i+1][1] === tokens[i+2][1]) {
+      i += 1;
+      continue;
+    }
+    out.push(tokens[i]);
+    i += 1;
+  }
+  return out;
+}
+
+function translitWord(word) {
+  let tokens = translitTokenize(word);
+  tokens = translitShamsiyya(tokens);
+  let out = '';
+  let i = 0;
+  let pendingCons = false;
+  const n = tokens.length;
+  while (i < n) {
+    const typ = tokens[i][0], val = tokens[i][1];
+    if (typ === 'BREAK') { pendingCons = false; i += 1; continue; }
+    if (typ === 'C') {
+      const base = TRANSLIT_CONS[val];
+      if (pendingCons) out += '্';
+      out += base;
+      pendingCons = true;
+      if (i + 1 < n && tokens[i+1][0] === 'V') {
+        out += TRANSLIT_VOWEL_MATRA[tokens[i+1][1]];
+        pendingCons = false;
+        i += 2;
+        continue;
+      } else {
+        i += 1;
+        continue;
+      }
+    } else {
+      out += TRANSLIT_VOWEL_INDEP[val];
+      pendingCons = false;
+      i += 1;
+      continue;
+    }
+  }
+  return out;
+}
+
+function toBanglaUccharon(text) {
+  if (!text) return '';
+  return text.split(' ').filter(Boolean).map(translitWord).join(' ');
+}
+const surahCacheKey = n => 'quran_surah_data_v1_' + n;
+
+/* এই তিনটা DOM reference সবার আগে declare করা — কারণ নিচের audio-resume
+   logic (resumeAudioOnLoad) page load হওয়ার সাথে সাথেই চলে এবং pageBody
+   ব্যবহার করে। আগে এটা অনেক নিচে declare করা ছিল, যার ফলে audio চালু
+   অবস্থায় নতুন পেজ load হলে script এখানে crash করে থেমে যেত — আর তার
+   নিচের সব কোড (back button কাজ করা, list/surah দেখানো) একদম run-ই হতো না। */
 const pageBody = document.getElementById('pageBody');
+const pageTitle = document.getElementById('pageTitle');
 const backBtn = document.getElementById('backBtn');
-backBtn.addEventListener('click', function () {
-  window.location.href = 'index.html' + (isAppMode ? '?app=1' : '');
-});
 
-/* ============ AUDIO ENGINE (quran.html-এর সাথে identical state key ব্যবহার করে,
-   তাই এই পেজ আর quran.html-এর মধ্যে playback নির্বিঘ্নে resume/sync হয়) ============ */
+/* ============ AUDIO PLAYER (pure Arabic recitation — Mishary Alafasy) ============ */
 const AUDIO_EDITION = 'ar.alafasy';
 const AUDIO_BITRATE = 128;
 const AUDIO_STATE_KEY = 'quran_audio_state_v1';
@@ -185,12 +341,12 @@ function getSurahMeta(n, cb) {
 function showAudioBar() {
   audioBarEl.classList.add('active');
   pageBody.style.bottom = '196px';
-  syncRowsUI();
+  syncListenBtnUI();
 }
 function hideAudioBar() {
   audioBarEl.classList.remove('active');
   pageBody.style.bottom = '128px';
-  syncRowsUI();
+  syncListenBtnUI();
 }
 function updateAudioBarInfo(n) {
   audioSurahEnEl.textContent = 'Surah ' + n + ' — লোড হচ্ছে...';
@@ -204,15 +360,13 @@ function updateAudioBarInfo(n) {
     }
   });
 }
-function syncRowsUI() {
+function syncListenBtnUI() {
+  const btn = document.getElementById('listenBtn');
+  if (!btn) return;
   const s = getAudioState();
-  document.querySelectorAll('.surah-row').forEach(row => {
-    const n = Number(row.getAttribute('data-n'));
-    const btn = row.querySelector('.surah-play-btn');
-    const isThisPlaying = s && s.surah === n && s.playing && !audioPlayer.paused;
-    row.classList.toggle('playing', !!(s && s.surah === n));
-    if (btn) { btn.classList.toggle('playing', !!isThisPlaying); btn.textContent = isThisPlaying ? '⏸' : '▶'; }
-  });
+  const isThisSurahPlaying = s && s.surah === Number(btn.getAttribute('data-surah')) && s.playing && !audioPlayer.paused;
+  btn.classList.toggle('is-playing', !!isThisSurahPlaying);
+  btn.textContent = isThisSurahPlaying ? '⏸ Playing…' : '🔊 Listen (আরবি Audio)';
 }
 function playSurahAudio(n, resumeTime) {
   if (n < 1 || n > 114) { stopAudio(); return; }
@@ -222,8 +376,8 @@ function playSurahAudio(n, resumeTime) {
   if (resumeTime) { try { audioPlayer.currentTime = resumeTime; } catch (e) {} }
   const p = audioPlayer.play();
   if (p && p.then) {
-    p.then(() => { audioPlayPauseBtn.textContent = '⏸'; syncRowsUI(); })
-     .catch(() => { audioPlayPauseBtn.textContent = '▶'; syncRowsUI(); });
+    p.then(() => { audioPlayPauseBtn.textContent = '⏸'; syncListenBtnUI(); })
+     .catch(() => { audioPlayPauseBtn.textContent = '▶'; syncListenBtnUI(); });
   }
   showAudioBar();
 }
@@ -239,17 +393,7 @@ function startFullQuranAudio() {
   if (s && s.surah) playSurahAudio(s.surah, s.time);
   else playSurahAudio(1);
 }
-function toggleSurahAudio(n) {
-  const s = getAudioState();
-  if (s && s.surah === n && !audioPlayer.paused) {
-    audioPlayer.pause();
-    audioPlayPauseBtn.textContent = '▶';
-    s.playing = false; setAudioState(s);
-    syncRowsUI();
-  } else {
-    playSurahAudio(n);
-  }
-}
+function playThisSurahAudio(n) { playSurahAudio(n); }
 
 audioPlayPauseBtn.addEventListener('click', () => {
   if (!audioPlayer.src) return;
@@ -262,7 +406,7 @@ audioPlayPauseBtn.addEventListener('click', () => {
     audioPlayPauseBtn.textContent = '▶';
     const s = getAudioState(); if (s) { s.playing = false; setAudioState(s); }
   }
-  syncRowsUI();
+  syncListenBtnUI();
 });
 document.getElementById('audioPrev').addEventListener('click', () => {
   const s = getAudioState(); playSurahAudio(Math.max(1, (s ? s.surah : 1) - 1));
@@ -284,9 +428,10 @@ audioPlayer.addEventListener('timeupdate', () => {
   const s = getAudioState();
   if (s) { s.time = audioPlayer.currentTime; setAudioState(s); }
 });
-audioPlayer.addEventListener('play', syncRowsUI);
-audioPlayer.addEventListener('pause', syncRowsUI);
+audioPlayer.addEventListener('play', syncListenBtnUI);
+audioPlayer.addEventListener('pause', syncListenBtnUI);
 
+/* Resume playback bar (and, if it was playing, the audio itself) after navigation/reload */
 (function resumeAudioOnLoad() {
   const s = getAudioState();
   if (s && s.surah) {
@@ -298,7 +443,7 @@ audioPlayer.addEventListener('pause', syncRowsUI);
       const p = audioPlayer.play();
       if (p && p.then) p.then(() => { audioPlayPauseBtn.textContent = '⏸'; }).catch(() => {
         audioPlayPauseBtn.textContent = '▶';
-        s.playing = false; setAudioState(s);
+        s.playing = false; setAudioState(s); // resume ব্যর্থ হলে state-ও accurate রাখা হচ্ছে
       });
     } else {
       audioPlayPauseBtn.textContent = '▶';
@@ -306,7 +451,13 @@ audioPlayer.addEventListener('pause', syncRowsUI);
   }
 })();
 
-/* ============ SURAH LIST ============ */
+function goHome() { window.location.href = 'index.html' + (isAppMode ? '?app=1' : ''); }
+function goList() { window.location.href = 'quran.html' + (isAppMode ? '?app=1' : ''); }
+
+backBtn.addEventListener('click', function () {
+  if (surahParam) goList(); else goHome();
+});
+
 function showLoading(msg) {
   pageBody.innerHTML = '<div class="state-box"><div class="spinner"></div>' + msg + '</div>';
 }
@@ -319,58 +470,90 @@ function showError(msg, retryFn) {
   document.getElementById('retryBtn').addEventListener('click', retryFn);
 }
 
-function renderList(list) {
-  let html = '<div class="search-box"><input class="search-input" id="searchInput" placeholder="সূরা খুঁজুন (নাম বা নম্বর)..."></div>';
-  html += `
-    <div class="full-quran-card" id="fullQuranCard">
-      <div class="full-quran-icon">🎧</div>
-      <div class="full-quran-info">
-        <div class="full-quran-title">Full Quran Audio</div>
-        <div class="full-quran-sub">১ থেকে ১১৪ পর্যন্ত সব সূরা একটানা শুনুন</div>
-      </div>
-      <div class="full-quran-play" id="fullQuranPlayIcon">▶</div>
-    </div>
-  `;
-  html += '<div class="list-label">সকল সূরা — আলাদা আলাদা শুনুন</div>';
+/* ============ SURAH LIST SCREEN ============ */
+function getFavSurahs() {
+  try { return JSON.parse(localStorage.getItem('quran_favourite_surahs')) || []; } catch (e) { return []; }
+}
+function isFavSurah(n) { return getFavSurahs().includes(n); }
+function toggleFavSurah(n) {
+  let favs = getFavSurahs();
+  const idx = favs.indexOf(n);
+  if (idx === -1) favs.push(n); else favs.splice(idx, 1);
+  localStorage.setItem('quran_favourite_surahs', JSON.stringify(favs));
+  return favs.includes(n);
+}
+
+function renderSurahList(list, fromCache) {
+  pageTitle.textContent = audioParam ? 'Audio Quran' : 'Al-Quran';
+  let html = '<div class="search-box"><input class="search-input" id="searchInput" placeholder="সূরা খুঁজুন (নাম বা নম্বর)...">' +
+    '<button class="full-quran-btn" id="fullQuranBtn">🎧 Full Quran Audio</button>' +
+    '<button class="fav-toggle-btn" id="favListToggleBtn" title="Favourite Surahs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>' +
+    '</div>';
   html += '<div class="surah-list" id="surahListBox"></div>';
   pageBody.innerHTML = html;
 
-  document.getElementById('fullQuranCard').addEventListener('click', startFullQuranAudio);
+  document.getElementById('fullQuranBtn').addEventListener('click', startFullQuranAudio);
 
   const listBox = document.getElementById('surahListBox');
+  let showingFavOnly = false;
+  const favIcon = `<path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>`;
   function draw(items) {
-    if (!items.length) {
-      listBox.innerHTML = '<div class="empty-msg" style="text-align:center;color:#999;padding:30px 0;">কোনো সূরা পাওয়া যায়নি</div>';
+    if (items.length === 0) {
+      listBox.innerHTML = '<div class="empty-msg">কোনো Favourite সূরা এখনো যোগ করা হয়নি</div>';
       return;
     }
-    listBox.innerHTML = items.map(s => `
-      <div class="surah-row" data-n="${s.number}">
+    listBox.innerHTML = items.map(s => {
+      const fav = isFavSurah(s.number);
+      return `
+      <div class="surah-card" data-n="${s.number}">
         <div class="surah-num">${s.number}</div>
         <div class="surah-info">
           <div class="surah-en">${s.englishName}</div>
-          <div class="surah-sub">${s.englishNameTranslation} · ${s.numberOfAyahs} Ayahs</div>
+          <div class="surah-sub">${audioParam ? '🎧 ' : ''}${s.englishNameTranslation} · ${s.numberOfAyahs} Ayahs · ${s.revelationType}</div>
         </div>
         <div class="surah-ar">${s.name}</div>
-        <button class="surah-play-btn" data-play-n="${s.number}">▶</button>
+        <div class="surah-add-fav${fav ? ' active' : ''}" data-fav-n="${s.number}">
+          <svg viewBox="0 0 24 24" fill="${fav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">${favIcon}</svg>
+          ${fav ? 'Added to Favourite' : 'Add to Favourite'}
+        </div>
       </div>
-    `).join('');
-    listBox.querySelectorAll('.surah-play-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleSurahAudio(Number(btn.getAttribute('data-play-n')));
+    `;
+    }).join('');
+    listBox.querySelectorAll('.surah-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.surah-add-fav')) return; // favourite টগল হলে সূরা না খুলুক
+        const n = card.getAttribute('data-n');
+        // Audio Quran থেকে এলে প্রতিটা সূরায় ট্যাপ করলেই সরাসরি সেই সূরার Audio
+        // চালু হয়ে যাবে (Reading page না খুলে) — এটাই এখানে "সব সূরার" audio browsing।
+        if (audioParam) { playThisSurahAudio(Number(n)); return; }
+        window.location.href = 'quran.html?surah=' + n + (isAppMode ? '&app=1' : '');
       });
     });
-    listBox.querySelectorAll('.surah-row').forEach(row => {
-      row.addEventListener('click', () => toggleSurahAudio(Number(row.getAttribute('data-n'))));
+    listBox.querySelectorAll('.surah-add-fav').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const n = Number(el.getAttribute('data-fav-n'));
+        const nowFav = toggleFavSurah(n);
+        el.classList.toggle('active', nowFav);
+        el.innerHTML = `<svg viewBox="0 0 24 24" fill="${nowFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">${favIcon}</svg> ${nowFav ? 'Added to Favourite' : 'Add to Favourite'}`;
+        if (showingFavOnly && !nowFav) draw(list.filter(s => isFavSurah(s.number)));
+      });
     });
-    syncRowsUI();
   }
   draw(list);
 
+  document.getElementById('favListToggleBtn').addEventListener('click', function () {
+    showingFavOnly = !showingFavOnly;
+    this.classList.toggle('active', showingFavOnly);
+    document.getElementById('searchInput').value = '';
+    draw(showingFavOnly ? list.filter(s => isFavSurah(s.number)) : list);
+  });
+
   document.getElementById('searchInput').addEventListener('input', function (e) {
     const q = e.target.value.trim().toLowerCase();
-    if (!q) { draw(list); return; }
-    draw(list.filter(s =>
+    const base = showingFavOnly ? list.filter(s => isFavSurah(s.number)) : list;
+    if (!q) { draw(base); return; }
+    draw(base.filter(s =>
       s.englishName.toLowerCase().includes(q) ||
       s.englishNameTranslation.toLowerCase().includes(q) ||
       String(s.number) === q ||
@@ -382,7 +565,7 @@ function renderList(list) {
 function loadSurahList() {
   const cached = localStorage.getItem(LIST_CACHE_KEY);
   if (cached) {
-    try { renderList(JSON.parse(cached)); return; } catch (e) {}
+    try { renderSurahList(JSON.parse(cached), true); return; } catch (e) {}
   }
   showLoading('সূরার তালিকা লোড হচ্ছে...');
   fetch(API_BASE + '/surah')
@@ -390,17 +573,114 @@ function loadSurahList() {
     .then(json => {
       if (!json.data) throw new Error('bad response');
       localStorage.setItem(LIST_CACHE_KEY, JSON.stringify(json.data));
-      renderList(json.data);
+      renderSurahList(json.data, false);
     })
     .catch(() => {
       showError('তালিকা লোড করা যায়নি। ইন্টারনেট সংযোগ চেক করুন।', loadSurahList);
     });
 }
 
-loadSurahList();
+/* ============ SURAH DETAIL SCREEN ============ */
+function renderSurahDetail(data, fromCache) {
+  const editions = data.editions;
+  const translitVerses = data.translit || [];
+  const ar = editions.find(e => e.edition.identifier === 'quran-uthmani');
+  const bn = editions.find(e => e.edition.identifier === 'bn.bengali');
+  const en = editions.find(e => e.edition.identifier === 'en.sahih');
+
+  pageTitle.textContent = ar.number + '. ' + ar.englishName;
+
+  let html = `
+    <div class="surah-header">
+      <div class="ar-name">${ar.name}</div>
+      <div class="en-name">${ar.englishName} — ${ar.englishNameTranslation}</div>
+      <div class="meta">${ar.numberOfAyahs} Ayahs · ${ar.revelationType}${fromCache ? '<br><span class="offline-tag">📥 Offline এ সংরক্ষিত</span>' : ''}</div>
+      <button class="listen-btn" id="listenBtn" data-surah="${ar.number}">🔊 Listen (আরবি Audio)</button>
+    </div>
+  `;
+
+  if (ar.number !== 1 && ar.number !== 9) {
+    html += '<div class="bismillah">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>';
+  }
+
+  ar.ayahs.forEach((ayah, i) => {
+    const bnText = bn.ayahs[i] ? bn.ayahs[i].text : '';
+    const enText = en.ayahs[i] ? en.ayahs[i].text : '';
+    let translitText = '';
+    if (translitVerses[i] && translitVerses[i].translitBn) {
+      translitText = translitVerses[i].translitBn;
+    } else if (translitVerses[i] && translitVerses[i].transliteration) {
+      translitText = toBanglaUccharon(translitVerses[i].transliteration);
+    }
+    html += `
+      <div class="ayah-block">
+        <div class="ayah-num-badge">${ayah.numberInSurah}</div>
+        <div class="ayah-arabic">${ayah.text}</div>
+        ${translitText ? `<div class="ayah-translit">${translitText}</div>` : ''}
+        <div class="ayah-bn">${bnText}</div>
+        <div class="ayah-en">${enText}</div>
+      </div>
+    `;
+  });
+
+  pageBody.innerHTML = html;
+  pageBody.scrollTop = 0;
+
+  const listenBtn = document.getElementById('listenBtn');
+  listenBtn.addEventListener('click', () => {
+    const s = getAudioState();
+    if (s && s.surah === ar.number && !audioPlayer.paused) {
+      audioPlayer.pause();
+      audioPlayPauseBtn.textContent = '▶';
+      s.playing = false; setAudioState(s);
+    } else {
+      playThisSurahAudio(ar.number);
+    }
+    syncListenBtnUI();
+  });
+  syncListenBtnUI();
+}
+
+function loadSurahDetail(n) {
+  const cacheKey = surahCacheKey(n);
+  const cached = localStorage.getItem(cacheKey);
+  if (cached) {
+    try {
+      const parsed = JSON.parse(cached);
+      if (parsed && parsed.editions) { renderSurahDetail(parsed, true); return; }
+    } catch (e) {}
+  }
+  showLoading('সূরা লোড হচ্ছে... (আরবি + বাংলা উচ্চারণ + বাংলা + English)');
+  Promise.all([
+    fetch(API_BASE + '/surah/' + n + '/editions/' + EDITIONS).then(r => r.json()),
+    fetch(TRANSLIT_BASE + '/' + n + '.json').then(r => r.json()).catch(() => null)
+  ])
+    .then(([editionsJson, chapterJson]) => {
+      if (!editionsJson.data || editionsJson.data.length < 3) throw new Error('bad response');
+      let translit = [];
+      if (chapterJson && Array.isArray(chapterJson.verses)) {
+        translit = chapterJson.verses.map(v => ({
+          translitBn: toBanglaUccharon(v.transliteration || '')
+        }));
+      }
+      const combined = { editions: editionsJson.data, translit: translit };
+      try { localStorage.setItem(cacheKey, JSON.stringify(combined)); } catch (e) { /* storage full — still show it */ }
+      renderSurahDetail(combined, false);
+    })
+    .catch(() => {
+      showError('এই সূরাটি লোড করা যায়নি। ইন্টারনেট সংযোগ চেক করে আবার চেষ্টা করুন।', () => loadSurahDetail(n));
+    });
+}
+
+/* ============ INIT ============ */
+if (surahParam) {
+  loadSurahDetail(surahParam);
+} else {
+  loadSurahList();
+}
 </script>
 
 <script src="nav.js"></script>
-<script>NFNav.init('audio');</script>
+<script>NFNav.init(new URLSearchParams(window.location.search).get('audio') === '1' ? 'audio' : '');</script>
 </body>
 </html>
